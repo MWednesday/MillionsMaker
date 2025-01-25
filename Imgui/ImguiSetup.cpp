@@ -88,7 +88,7 @@ void CleanupDeviceD3D()
   if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = NULL; }
   if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
 }
-
+#include <atlstr.h> // CA2CT
 void PrintMessageWithCorrectColor(MessageType type, const char* line_start, const char* line_end)
 {
   if (type == MessageType::Info)
@@ -98,6 +98,8 @@ void PrintMessageWithCorrectColor(MessageType type, const char* line_start, cons
   else // pick color
   {
     size_t text_line_size = line_end + 2 - line_start;
+    //std::string message = "Will allocated new char of size: " + std::to_string(text_line_size) + "\n";
+    //OutputDebugString(CA2CT(message.c_str()));
     char* text_line = new char[text_line_size];
     strncpy_s(text_line, text_line_size, line_start, text_line_size - 1);
 

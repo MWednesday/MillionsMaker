@@ -67,13 +67,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
   std::thread renderingThread([]() { SetupAndRenderImgui(); }); 
 
   gecko::api coinGecko;
-  if (!coinGecko.ping())
+  while (!coinGecko.ping())
   {
-    ReportError("CoinGecko offline!");
-    renderingThread.detach();
-    return false;
+    ReportError("CoinGecko is offline! Waiting...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+    //renderingThread.detach();
   }
-
   renderingThread.join();
   return 0;
 }

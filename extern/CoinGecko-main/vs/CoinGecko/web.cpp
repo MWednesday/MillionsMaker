@@ -1,23 +1,26 @@
 #include "web.h"
 
-cpr::Response gecko::web::request(REQUIRED std::string endpointPath, OPTIONAL cpr::Parameters* parameters) {
+cpr::Response gecko::web::request(REQUIRED std::string endpointPath, OPTIONAL cpr::Parameters* parameters)
+{
 	cpr::Response r;
-	if (parameters != NULL) {
-		r = cpr::Get(
-			cpr::Url {
-				this->endpoint + endpointPath
-			},
-			cpr::Parameters(*parameters)
-		);
-		return r;
-	} else {
-		r = cpr::Get(
-			cpr::Url{
-				this->endpoint + endpointPath
-			}
-		);
-		return r;
+
+	cpr::Parameters params;
+	if (parameters)
+	{
+		params = *parameters;
 	}
+
+	cpr::Parameter apiKey("x_cg_demo_api_key", "CG-6QuWoeB9HcwmbsjwLpEMCcjJ");
+	params.Add(apiKey);
+
+	r = cpr::Get(
+		cpr::Url {
+			this->endpoint + endpointPath
+		},
+		params
+	);
+
+	return r;
 }
 
 cpr::Parameters gecko::web::buildParameters(

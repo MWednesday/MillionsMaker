@@ -97,17 +97,18 @@ struct MessageLog
   //  }
   //}
 
+  // Does this func support multithreading?
   void    AddLog(const Message& msg)
   {
     MessageData message;
     message.m_type = msg.m_Type;
-    message.m_lineOffset = Buf.size();
     m_lock.lock();
+    message.m_lineOffset = Buf.size();
     MessagesData.push_back(message);
-    m_lock.unlock();
 
     int old_size = Buf.size();
     Buf.appendf(msg.m_Text);
+    m_lock.unlock();
 
     // looking for additional \n
     int additionalNewLineCount = 0;

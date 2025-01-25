@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include "Logging.h"
 
 #pragma optimize("", off)
 
@@ -54,13 +55,13 @@ bool JSONBase::InitDocument(const std::string& s, rapidjson::Document& doc)
 
 	std::string validJson(s);
 
-
 	bool successful = !doc.Parse(validJson.c_str()).HasParseError() ? true : false;
 
   rapidjson::ParseErrorCode error = doc.GetParseError();
   if (error != rapidjson::ParseErrorCode::kParseErrorNone)
   {
-    std::cout << "\n\n Error! Code: " << error << "\n\n\n";
+		ReportError("Failed to parse json! Error code: %u", error);
   }
+
   return successful;
 }

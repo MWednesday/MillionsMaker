@@ -7,14 +7,48 @@
 
 #pragma optimize("", off)
 
+const bool CheckError(const gecko::web::response& response)
+{
+  // https://support.coingecko.com/hc/en-us/articles/6472757474457-How-can-I-differentiate-between-the-status-codes-I-am-receiving-and-what-do-they-mean
+
+  if (response.response_code == "200") // OK
+  {
+    return false;
+  }
+
+  return true;
+}
+
 void CryptoConnection::GetCoinInfoAndDeserialize(std::vector<int> pageNumbers)
 {
+  //ReportAssert(pageNumbers.size() > 0, "Ran function with 0 pages to process");
+
   gecko::coinsFunctions coins;
   gecko::web::response coinMarketDataResponse;
-  for (int pageNumber : pageNumbers)
+  int lastReportedPage = -1;
+
+  for (int i = 0; i < pageNumbers.size();)
   {
-    coinMarketDataResponse = coins.getMarkets("usd", 0, "1h,24h,7d,14d,30d", 0, pageNumber, 250, false, "id_asc");
+    if (pageNumbers[i] == 0)
+    {
+      volatile int i = 0;
+    }
+    coinMarketDataResponse = coins.getMarkets("usd", 0, "1h,24h,7d,14d,30d", 0, pageNumbers[i], 250, false, "id_asc");
+
+    if (CheckError(coinMarketDataResponse))
+    {
+      if (pageNumbers[i] != lastReportedPage)
+      {
+        ReportError("Web request failed for page %u! Will retry soon. %s", pageNumbers[i], coinMarketDataResponse.text.c_str());
+        lastReportedPage = pageNumbers[i];
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+      continue;
+    }
+    ReportInfo("Processed page %u", pageNumbers[i]);
+
     m_coinList.Deserialize(coinMarketDataResponse.text); // deserialize all coins in page
+    i++;
   }
 }
 
@@ -22,10 +56,11 @@ bool CryptoConnection::FillCoinList()
 {
   MeasureScopeTime(ProcessingAllCoinsFromCoinGecko);
   gecko::api coinGecko;
-  if (!coinGecko.ping())
+
+  while (!coinGecko.ping())
   {
-    ReportError("CoinGecko offline!");
-    return false;
+    ReportError("CoinGecko is offline! Waiting...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(4000));
   }
 
   gecko::coinsFunctions coins;
@@ -58,18 +93,28 @@ bool CryptoConnection::FillCoinList()
     {
       pageNumbers.push_back(pageNum);
     }
-    workThreads[threadNum] = std::thread(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers)); // we don't need elements here after this, so can move
+
+    if (pageNumbers.size() > 0)
+    {
+      workThreads[threadNum] = std::thread(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers)); // we don't need elements here after this, so can move
+    }
   }
 
   for (; pageNum <= numOfPages; pageNum++)
   {
     pageNumbers.push_back(pageNum);
   }
-  workThreads[NUMOFTHREADS - 1] = std::thread(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers));
+  if (pageNumbers.size() > 0)
+  {
+    workThreads[NUMOFTHREADS - 1] = std::thread(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers));
+  }
 
   for (int threadNum = 0; threadNum < NUMOFTHREADS; threadNum++)
   {
-    workThreads[threadNum].join();
+    if (workThreads[threadNum].joinable())
+    {
+      workThreads[threadNum].join();
+    }
   }
 
   //for (int pageNum = 1; pageNum <= numOfPages; pageNum++)
