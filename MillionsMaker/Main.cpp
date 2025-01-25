@@ -71,7 +71,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
   {
     ReportError("CoinGecko is offline! Waiting...");
     std::this_thread::sleep_for(std::chrono::milliseconds(4000));
-    //renderingThread.detach();
   }
   renderingThread.join();
   return 0;

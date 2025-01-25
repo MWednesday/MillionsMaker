@@ -88,7 +88,8 @@ void CleanupDeviceD3D()
   if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = NULL; }
   if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
 }
-#include <atlstr.h> // CA2CT
+
+//#include <atlstr.h> // CA2CT
 void PrintMessageWithCorrectColor(MessageType type, const char* line_start, const char* line_end)
 {
   if (type == MessageType::Info)
