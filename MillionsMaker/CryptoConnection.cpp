@@ -45,9 +45,9 @@ void CryptoConnection::GetCoinInfoAndDeserialize(std::vector<int> pageNumbers)
       std::this_thread::sleep_for(std::chrono::milliseconds(4000));
       continue;
     }
-    ReportInfo("Processed page %u", pageNumbers[i]);
 
     m_coinList.Deserialize(coinMarketDataResponse.text); // deserialize all coins in page
+    ReportDebug("Processed all coins in page %u", pageNumbers[i]);
     i++;
   }
 }
@@ -123,8 +123,15 @@ bool CryptoConnection::FillCoinList()
   //  m_coinList.Deserialize(coinMarketDataResponse.text); // deserialize all coins in page
   //}
 
-  m_coinList.DeserializePlatform(doc);
+  {
+    MeasureScopeTime(SortCoinList);
+    m_coinList.SortCoinList();
+  }
 
+  {
+    MeasureScopeTime(DeserializePlatform);
+    m_coinList.DeserializePlatform(doc);
+  }
   m_SetupFinished = true;
   return true;
 }
@@ -155,6 +162,23 @@ void CryptoConnection::ScanAndReportSuccessfulCoins()
 
 std::wstring CryptoConnection::GetBuyLink(const std::string& coinID)
 {
+  // Could also use the following method - instead of doing any CoinGecko calls, just find cached info in coin's platform. The issue is that we won't be able to open coin's official link
+//auto const coin = std::find(GetCoinList().GetCoinList().begin(), GetCoinList().GetCoinList().end(), coinID);
+
+//if (coin == GetCoinList().GetCoinList().end())
+//{
+//  ReportError("Failed to find the coin %s during GetBuyLink()", coinID.c_str());
+//  return L"";
+//}
+//if (coin->m_platforms.empty())
+//{
+//  ReportError("No info on which platforms %s can be found.", coinID.c_str());
+//}
+
+//// the first element should be the main platform
+//const Coin::Platform platform = coin->m_platforms.begin()->first;
+//const std::string address = coin->m_platforms.begin()->second;
+
   gecko::api coinGecko;
   if (!coinGecko.ping())
   {
@@ -174,9 +198,14 @@ std::wstring CryptoConnection::GetBuyLink(const std::string& coinID)
   }
 
   const rapidjson::Value& platforms = doc["platforms"];
-  auto platformChar = platforms[0].GetString(); // the first element should be the main platform
-  std::string platform = platformChar;
-  std::string address = platforms[platformChar].GetString();
+  std::string platform("");
+  std::string address("");
+  if (platforms.MemberCount() > 0)
+  {
+    // the first element should be the main platform
+    platform = platforms.MemberBegin()->name.GetString();
+    address = platforms.MemberBegin()->value.GetString();
+  }
 
   std::string buy_link = "";
   if (platform == "ethereum" && address != "")
@@ -189,16 +218,20 @@ std::wstring CryptoConnection::GetBuyLink(const std::string& coinID)
   }
   else if (platform == "" || address == "") // coin probably has a custom platform
   {
+    ReportError("No info on which platforms %s can be found. Will open its homepage instead.", coinID.c_str());
     const rapidjson::Value& links = doc["links"];
     buy_link = links["homepage"].GetArray()[0].GetString();
   }
   else
   {
-    ReportError("Coin %s has a not very popular blockchain platform %s which hasn't been set up yet in MillionsMaker. Will open CoinGecko instead.", coinID, platform);
+    ReportError("Coin %s has a not very popular blockchain platform %s which hasn't been set up yet in MillionsMaker. Will open CoinGecko instead.", coinID.c_str(), platform.c_str());
     buy_link = "https://www.coingecko.com/en/coins/" + coinID + "#markets";
   }
 
   //string to wstring
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
-  return conv.from_bytes(buy_link);
+  // Get size of the wstring. It can be different from std::string due to possible special characters and each char is at least 2 bytes
+  int wideCharLen = MultiByteToWideChar(CP_UTF8, 0, buy_link.c_str(), -1, nullptr, 0);
+  std::wstring wstr(wideCharLen, L'\0');
+  MultiByteToWideChar(CP_UTF8, 0, buy_link.c_str(), -1, &wstr[0], wideCharLen);
+  return wstr;
 }

@@ -40,25 +40,27 @@ public:
     BINANCECOIN         = 1 << 20,
     EOS                 = 1 << 21,
     NEO                 = 1 << 22,
-    KLAY_TOKEN          = 1 << 23
+    KLAY_TOKEN          = 1 << 23,
+    BASE                = 1 << 24,
+    CRONOS              = 1 << 25
   };
 
-  std::string     m_id;
-  std::string     m_name;
-  float           m_current_price;
-  float           m_market_cap;
-  int             m_market_cap_rank;
-  float           m_ath;
-  float           m_ath_change_percentage;
-  std::string     m_ath_date;
-  float           m_atl;
-  float           m_atl_change_percentage;
-  std::string     m_atl_date;
-  float           m_price_change_percentage_1h_in_currency;
-  float           m_price_change_percentage_24h_in_currency;
-  float           m_price_change_percentage_7d_in_currency;
-  float           m_price_change_percentage_14d_in_currency;
-  float           m_price_change_percentage_30d_in_currency;
+  std::string   m_id {};
+  std::string   m_name {};
+  double        m_current_price {};
+  double        m_market_cap {};
+  int           m_market_cap_rank {};
+  double        m_ath {};
+  float         m_ath_change_percentage {};
+  std::string   m_ath_date {};
+  double        m_atl {};
+  float         m_atl_change_percentage {};
+  std::string   m_atl_date {};
+  float         m_price_change_percentage_1h_in_currency {};
+  float         m_price_change_percentage_24h_in_currency {};
+  float         m_price_change_percentage_7d_in_currency {};
+  float         m_price_change_percentage_14d_in_currency {};
+  float         m_price_change_percentage_30d_in_currency {};
   std::map<Platform, std::string>    m_platforms;
 
 };

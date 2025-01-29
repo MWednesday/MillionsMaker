@@ -44,6 +44,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>true</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -113,17 +114,18 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)JsonDeserializer;$(SolutionDir)extern\curl\include;$(SolutionDir)extern\cpr-1.6.2\include;$(SolutionDir)extern\CoinGecko-main\src\include;$(SolutionDir)extern\rapidjson-master\include;$(SolutionDir)extern\imgui-1.84.2;$(SolutionDir)Imgui;$(SolutionDir)Utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)JsonDeserializer;$(SolutionDir)extern\curl\include;$(SolutionDir)extern\cpr-1.11.1\include;$(SolutionDir)extern\CoinGecko-main\src\include;$(SolutionDir)extern\rapidjson-master\include;$(SolutionDir)extern\imgui-1.84.2;$(SolutionDir)Imgui;$(SolutionDir)Utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>
       </AdditionalOptions>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)extern\cpr-1.6.2\build\lib\$(Configuration);$(SolutionDir)\x64\$(Configuration)\;$(SolutionDir)extern\CoinGecko-main\vs\$(Platform)\$(Configuration);$(SolutionDir)extern\curl\build\win64\VC15\DLL $(Configuration) - DLL OpenSSL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)extern\cpr-1.11.1\build\lib\$(Configuration);$(SolutionDir)\x64\$(Configuration)\;$(SolutionDir)extern\CoinGecko-main\vs\$(Platform)\$(Configuration);$(SolutionDir)extern\curl\build\win64\VC15\DLL $(Configuration) - DLL OpenSSL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>CoinGecko.lib;libcurld.lib;cpr.lib;JsonDeserializer.lib;%(AdditionalDependencies);Imgui.lib;D3D11.lib;Utilities.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -165,20 +167,21 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)JsonDeserializer;$(SolutionDir)extern\curl\include;$(SolutionDir)extern\cpr-1.6.2\include;$(SolutionDir)extern\CoinGecko-main\src\include;$(SolutionDir)extern\rapidjson-master\include;$(SolutionDir)extern\imgui-1.84.2;$(SolutionDir)Imgui;$(SolutionDir)Utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)JsonDeserializer;$(SolutionDir)extern\curl\include;$(SolutionDir)extern\cpr-1.11.1\include;$(SolutionDir)extern\CoinGecko-main\src\include;$(SolutionDir)extern\rapidjson-master\include;$(SolutionDir)extern\imgui-1.84.2;$(SolutionDir)Imgui;$(SolutionDir)Utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>
       </AdditionalOptions>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PreprocessToFile>false</PreprocessToFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\x64\$(Configuration)\;$(SolutionDir)extern\CoinGecko-main\vs\CoinGecko\lib\$(PlatformShortName);$(SolutionDir)extern\cpr-1.6.2\build\lib\$(Configuration);$(SolutionDir)extern\curl\build\win64\VC15\DLL $(Configuration) - DLL OpenSSL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\x64\$(Configuration)\;$(SolutionDir)extern\CoinGecko-main\vs\CoinGecko\lib\$(PlatformShortName);$(SolutionDir)extern\cpr-1.11.1\build\lib\$(Configuration);$(SolutionDir)extern\curl\build\win64\VC15\DLL $(Configuration) - DLL OpenSSL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>CoinGecko.lib;libcurl.lib;cpr.lib;JsonDeserializer.lib;%(AdditionalDependencies);Imgui.lib;D3D11.lib;Utilities.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

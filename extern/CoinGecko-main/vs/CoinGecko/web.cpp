@@ -2,8 +2,6 @@
 
 cpr::Response gecko::web::request(REQUIRED std::string endpointPath, OPTIONAL cpr::Parameters* parameters)
 {
-	cpr::Response r;
-
 	cpr::Parameters params;
 	if (parameters)
 	{
@@ -13,11 +11,9 @@ cpr::Response gecko::web::request(REQUIRED std::string endpointPath, OPTIONAL cp
 	cpr::Parameter apiKey("x_cg_demo_api_key", "CG-6QuWoeB9HcwmbsjwLpEMCcjJ");
 	params.Add(apiKey);
 
-	r = cpr::Get(
-		cpr::Url {
-			this->endpoint + endpointPath
-		},
-		params
+	cpr::Response r = cpr::Get(
+		cpr::Url { this->endpoint + endpointPath},
+		params, cpr::SslOptions()
 	);
 
 	return r;

@@ -19,7 +19,7 @@ bool CoinList::Deserialize(const rapidjson::Value & arrayFile)
       m_CoinList2.insert(coin);
       m_lock.unlock();
       std::string info = "Added " + coin.m_name + " to the coin list.";
-      ReportInfo(info.c_str()); // passing preformatted string to avoid ??? in some coin names
+      ReportDebug(info.c_str()); // passing preformatted string to avoid ??? in some coin names
     }
   }
   else
@@ -123,9 +123,17 @@ Coin::Platform CoinList::DeterminePlatform(std::string platformString)
   {
     return Coin::Platform::KLAY_TOKEN;
   }
+  else if (platformString == "base")
+  {
+    return Coin::Platform::BASE;
+  }
+  else if (platformString == "cronos")
+  {
+    return Coin::Platform::CRONOS;
+  }
   else
   {
-    //ReportWarning("Platform was not planned: %s", platformString.c_str()); // For debugging in case we want to add some missing platforms. Probably only worth adding if it has >10 occurences 
+    ReportWarning("Platform was not planned: %s", platformString.c_str()); // For debugging in case we want to add some missing platforms. Probably only worth adding if it has >10 occurences 
     return Coin::Platform::UNKNOWN;
   }
 }
@@ -174,7 +182,7 @@ bool CoinList::DeserializePlatform(const rapidjson::Value& arrayFile)
         // find to which coin does this data belong and add it
         coinID = coinData["id"].GetString();
 
-        auto it = std::lower_bound(m_CoinList.begin(), m_CoinList.end(), coinID);
+        auto it = std::lower_bound(m_CoinList.begin(), m_CoinList.end(), coinID); // this requires a sorted list
 
         if (it != m_CoinList.end())
         {
@@ -203,4 +211,9 @@ void CoinList::PrintInfo()
     coin.PrintInfo();
     std::cout << std::endl;
   }
+}
+
+void CoinList::SortCoinList()
+{
+  std::sort(m_CoinList.begin(), m_CoinList.end());
 }

@@ -22,6 +22,9 @@ void FormatAndPrintMessage(MessageType type, std::string message, ...)
   std::string messageTypeString = "";
   switch (type)
   {
+  case MessageType::Debug:
+    messageTypeString = "DEBUG";
+    break;
   case MessageType::Info:
     messageTypeString = "INFO";
     break;

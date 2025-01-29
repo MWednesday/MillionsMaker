@@ -57,6 +57,73 @@ std::string get_working_path()
 //  CreateRenderTarget();
 //  return true;
 //}
+
+//// Custom allocators in case of memory issues
+//// Overriding the global 'new' operator
+//void* operator new(size_t size)
+//{
+//  void* ptr = std::malloc(size);
+//  if (!ptr)
+//  {
+//    throw std::bad_alloc();  // If malloc fails, throw a bad_alloc exception
+//  }
+//
+//#ifdef _DEBUG
+//  char buffer[256];
+//  snprintf(buffer, sizeof(buffer), "Allocating %zu bytes at %p\n", size, ptr);
+//  OutputDebugStringA(buffer);
+//#endif
+//
+//  return ptr;
+//}
+//
+//// Overriding the global 'delete' operator
+//void operator delete(void* ptr) noexcept
+//{
+//  if (ptr)
+//  {
+//#ifdef _DEBUG
+//    char buffer[256];
+//    snprintf(buffer, sizeof(buffer), "Deallocating memory at %p\n", ptr);
+//    OutputDebugStringA(buffer);
+//#endif
+//    std::free(ptr);
+//  }
+//}
+//
+//// Overriding the global 'new[]' operator (for array allocations)
+//void* operator new[](size_t size)
+//{
+//  void* ptr = std::malloc(size);
+//  if (!ptr)
+//  {
+//    throw std::bad_alloc();  // If malloc fails, throw a bad_alloc exception
+//  }
+//
+//#ifdef _DEBUG
+//  char buffer[256];
+//  snprintf(buffer, sizeof(buffer), "Allocating array of %zu bytes at %p\n", size, ptr);
+//  OutputDebugStringA(buffer);
+//#endif
+//
+//  return ptr;
+//}
+//
+//// Overriding the global 'delete[]' operator (for array deallocations)
+//void operator delete[](void* ptr) noexcept
+//{
+//  if (ptr)
+//  {
+//#ifdef _DEBUG
+//    char buffer[256];
+//    snprintf(buffer, sizeof(buffer), "Deallocating array memory at %p\n", ptr);
+//    OutputDebugStringA(buffer);
+//#endif
+//    std::free(ptr);
+//  }
+//}
+
+
 #include <windows.h>
 #include <processthreadsapi.h>
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
@@ -72,6 +139,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     ReportError("CoinGecko is offline! Waiting...");
     std::this_thread::sleep_for(std::chrono::milliseconds(4000));
   }
+
   renderingThread.join();
+
   return 0;
 }

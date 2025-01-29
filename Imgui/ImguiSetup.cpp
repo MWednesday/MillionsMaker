@@ -4,6 +4,7 @@
 #include "CryptoConnection.h"
 #include <algorithm>
 #include <cctype>
+#include "ScopeTimer.h"
 
 #pragma optimize("", off)
 
@@ -92,7 +93,7 @@ void CleanupDeviceD3D()
 //#include <atlstr.h> // CA2CT
 void PrintMessageWithCorrectColor(MessageType type, const char* line_start, const char* line_end)
 {
-  if (type == MessageType::Info)
+  if (type == MessageType::Debug)
   {
     ImGui::TextUnformatted(line_start, line_end);
   }
@@ -104,6 +105,10 @@ void PrintMessageWithCorrectColor(MessageType type, const char* line_start, cons
     char* text_line = new char[text_line_size];
     strncpy_s(text_line, text_line_size, line_start, text_line_size - 1);
 
+    if (type == MessageType::Info)
+    {
+      ImGui::TextColored(ImVec4(0.3f, 0.7f, 1.0f, 1.0f), text_line);
+    }
     if (type == MessageType::Warning)
     {
       ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), text_line);
@@ -144,8 +149,7 @@ void MessageLog::Draw(bool* p_open)
     ImGui::LogToClipboard();
 
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-  const char* buf = Buf.begin();
-  const char* buf_end = Buf.end();
+
   if (Filter.IsActive())
   {
     // In this example we don't use the clipper when Filter is enabled.
@@ -156,13 +160,14 @@ void MessageLog::Draw(bool* p_open)
     {
       m_lock.lock();
       MessageData message = MessagesData[line_no];
-      const char* line_start = buf + message.m_lineOffset;
-      const char* line_end = (line_no + 1 < MessagesData.Size) ? (buf + MessagesData[line_no + 1].m_lineOffset - 1) : buf_end;
+      const char* line_start = Buf.begin() + message.m_lineOffset;
+      const char* line_end = (line_no + 1 < MessagesData.Size) ? (Buf.begin() + MessagesData[line_no + 1].m_lineOffset - 1) : Buf.end();
+      const std::string line(line_start, line_end + 1);
       m_lock.unlock();
 
-      if (Filter.PassFilter(line_start, line_end))
+      if (Filter.PassFilter(line.data(), line.data() + line.size()))
       {
-        PrintMessageWithCorrectColor(message.m_type, line_start, line_end);
+        PrintMessageWithCorrectColor(message.m_type, line.data(), line.data() + line.size());
       }
     }
   }
@@ -189,11 +194,12 @@ void MessageLog::Draw(bool* p_open)
       {
         m_lock.lock();
         MessageData message = MessagesData[line_no];
-        const char* line_start = buf + message.m_lineOffset;
-        const char* line_end = (line_no + 1 < MessagesData.Size) ? (buf + MessagesData[line_no + 1].m_lineOffset - 1) : buf_end;
+        const char* line_start = Buf.begin() + message.m_lineOffset;
+        const char* line_end = (line_no + 1 < MessagesData.Size) ? (Buf.begin() + MessagesData[line_no + 1].m_lineOffset - 1) : Buf.end();
+        const std::string line(line_start, line_end + 1); // Saving value to free the lock
         m_lock.unlock();
 
-        PrintMessageWithCorrectColor(message.m_type, line_start, line_end);
+        PrintMessageWithCorrectColor(message.m_type, line.data(), line.data() + line.size());
       }
     }
     clipper.End();
@@ -373,7 +379,7 @@ static bool IMGUI_CDECL CompareWithSortSpecs(Coin& a, Coin& b)
       return (sort_spec->SortDirection == ImGuiSortDirection_Ascending) ? true : false;
   }
 
-  return (strcmp(a.m_name.c_str(), b.m_name.c_str()));
+  return strcmp(a.m_name.c_str(), b.m_name.c_str()) < 0;
 }
 
 // Will display the number in red if negative, in green if positive
@@ -535,6 +541,7 @@ void RenderImgui()
                 s_current_sort_specs = sorts_specs; // Store in variable accessible by the sort function.
                 if (coinList.size() > 1)
                 {
+                  MeasureScopeTime(SortImguiTable);
                   std::sort(coinList.begin(), coinList.end(), CompareWithSortSpecs);
                 }
                 s_current_sort_specs = NULL;
@@ -621,7 +628,7 @@ void RenderImgui()
                 ImGui::TextUnformatted(coin->m_name.c_str());
 
                 ImGui::TableNextColumn();
-                ImGui::Text("%f", coin->m_current_price);
+                ImGui::Text("%.10g", coin->m_current_price);
 
                 ImGui::TableNextColumn();
                 //ImGui::Text("%f", coin->m_market_cap);
@@ -704,7 +711,11 @@ void RenderImgui()
                 }
                 if (ImGui::SmallButton("Visit##Buy"))
                 {
-                  ShellExecute(0, 0, cryptoConnection.GetBuyLink(coin->m_id).c_str(), 0, 0, SW_SHOW);
+                  const std::wstring buyLink = cryptoConnection.GetBuyLink(coin->m_id);
+                  if (!buyLink.empty())
+                  {
+                    ShellExecute(0, 0, buyLink.c_str(), 0, 0, SW_SHOW);
+                  }
                   coinsWithBuyLinkVisited.insert(coin->m_id);
                 }
                 if (alreadyVisitedBuyLink)

@@ -6,6 +6,7 @@
 
 enum class MessageType
 {
+  Debug,
   Info,
   Warning,
   Error
@@ -18,6 +19,12 @@ struct Message
 };
 
 extern std::vector<std::function<void(const Message& message)>> g_Loggers;
+
+#ifdef _DEBUG
+#define ReportDebug(debug, ...) FormatAndPrintMessage(MessageType::Debug, debug, __VA_ARGS__)
+#else
+#define ReportDebug(debug, ...)
+#endif
 
 #define ReportInfo(info, ...) FormatAndPrintMessage(MessageType::Info, info, __VA_ARGS__)
 #define ReportWarning(warning, ...) FormatAndPrintMessage(MessageType::Warning, warning, __VA_ARGS__)

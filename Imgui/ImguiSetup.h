@@ -106,16 +106,16 @@ struct MessageLog
     message.m_lineOffset = Buf.size();
     MessagesData.push_back(message);
 
-    int old_size = Buf.size();
+    int newLinePos = Buf.size(); // old size
     Buf.appendf(msg.m_Text);
+    const int bufSize = Buf.size();
     m_lock.unlock();
 
     // looking for additional \n
     int additionalNewLineCount = 0;
-    int newLinePos = old_size;
-    for (int new_size = Buf.size(); newLinePos < new_size; newLinePos++)
+    for (int new_size = bufSize; newLinePos < new_size; newLinePos++)
     {
-      if (Buf[newLinePos] == '\n')
+      if (Buf[newLinePos] == '\n') // unsafe outside of mutex? Buffer might relocate
       {
         if (additionalNewLineCount == 0)
         {
@@ -123,8 +123,8 @@ struct MessageLog
         }
         else // more than 0
         {
-          message.m_lineOffset = MessagesData.empty() ? 0 : newLinePos + 1;
           m_lock.lock();
+          message.m_lineOffset = MessagesData.empty() ? 0 : newLinePos + 1;
           MessagesData.push_back(message);
           m_lock.unlock();
           additionalNewLineCount++;

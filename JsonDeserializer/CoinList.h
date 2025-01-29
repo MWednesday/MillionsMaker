@@ -17,6 +17,7 @@ public:
 
   virtual void PrintInfo();
 
+  void SortCoinList();
   const std::vector<Coin>& GetCoinList() const { return m_CoinList;  }
   const std::set<Coin>& GetCoinList2() const { return m_CoinList2; }
 
