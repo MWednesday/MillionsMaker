@@ -1,5 +1,7 @@
 # Cryptocurrency tracker-helper
 
+Click for demo video:
+
 [![Demo video](https://img.youtube.com/vi/AKAzLV8aGFE/0.jpg)](https://www.youtube.com/watch?v=AKAzLV8aGFE)
 
 This application is written entirely in C++.
