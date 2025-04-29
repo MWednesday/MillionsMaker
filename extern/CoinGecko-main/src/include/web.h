@@ -49,9 +49,14 @@ namespace gecko {
 			std::unique_ptr<cStrings> __buildCStringParameters(cStrings _cStrings);
 			std::unique_ptr<Bools>    __buildBoolParameters(Bools _bools);
 			std::unique_ptr<Shorts>   __buildShortParameters(Shorts _shorts);
-
-		private:
-			// API endpoint used in this->request
-			std::string endpoint = "https://api.coingecko.com/api/v3/";
 	};
+
+	struct API_Configuration
+	{
+		std::string API_ENDPOINT{};
+		std::string API_HEADER{};
+		std::string API_KEY{};
+	};
+
+	extern API_Configuration* API_Config;
 }

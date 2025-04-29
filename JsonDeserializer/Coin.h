@@ -14,6 +14,7 @@ public:
   inline bool operator< (const Coin& rhs) const { return m_id.compare(rhs.m_id) < 0; }
   inline bool operator< (const std::string& rhs) const { return m_id.compare(rhs) < 0; }
 
+  // Supports bitfielding, so we could use one variable to store multiple platforms
   enum class Platform
   {
     UNSET               = 0,      // Platform not initialized yet

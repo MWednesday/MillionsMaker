@@ -133,7 +133,7 @@ Coin::Platform CoinList::DeterminePlatform(std::string platformString)
   }
   else
   {
-    ReportWarning("Platform was not planned: %s", platformString.c_str()); // For debugging in case we want to add some missing platforms. Probably only worth adding if it has >10 occurences 
+    ReportDebug("Platform was not planned: %s", platformString.c_str()); // For debugging in case we want to add some missing platforms. Probably only worth adding if it has >10 occurences 
     return Coin::Platform::UNKNOWN;
   }
 }

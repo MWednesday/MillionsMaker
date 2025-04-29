@@ -192,6 +192,11 @@
   <ItemGroup>
     <ClInclude Include="CryptoConnection.h" />
   </ItemGroup>
+  <ItemGroup>
+  <Content Include="$(SolutionDir)extern\CoinGecko-main\config.ini">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

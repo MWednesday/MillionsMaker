@@ -75,6 +75,9 @@ namespace gecko {
 			// ... 'categories' functions ...
 			categoriesFunctions categories;
 
+			DllExport static bool Initialize(const std::string configFile);
+			DllExport static void Shutdown();
+
 			// Action: checks status of CoinGecko API
 			// Returns: true/false (online/offline)
 			// Refer: https://www.coingecko.com/api/documentations/v3

@@ -80,48 +80,34 @@ bool CryptoConnection::FillCoinList()
   m_coinsToParse = doc.GetArray().Size(); // Modify this to a number like 500 for faster launch during development
   const int numOfPages = ceil(m_coinsToParse / 250.0);
   
-  const int NUMOFTHREADS = 20;
-  std::thread workThreads[NUMOFTHREADS]; // I guess since this is a regular array it doesn't use heap, but the issue is that it will auto-create default(empty) threads which we don't need and they later get replaced by real threads
-  int workForNineThreads = ceil((float)numOfPages / NUMOFTHREADS);
-  int workForTenth = numOfPages % workForNineThreads;
+  const int numOfThreads = std::thread::hardware_concurrency();
+  std::vector<std::thread> workThreads;
+  workThreads.reserve(numOfThreads);
+
+  int pagesPerThread = ceil((float)numOfPages / numOfThreads);
 
   int pageNum = 1;
   std::vector<int> pageNumbers;
-  for (int threadNum = 0; threadNum < NUMOFTHREADS - 1; threadNum++)
+  for (int threadNum = 0; threadNum < numOfThreads - 1; threadNum++)
   {
-    for (int k = 0; k < workForNineThreads && pageNum <= numOfPages; k++, pageNum++)
+    for (int k = 0; k < pagesPerThread && pageNum <= numOfPages; k++, pageNum++)
     {
       pageNumbers.push_back(pageNum);
     }
 
     if (pageNumbers.size() > 0)
     {
-      workThreads[threadNum] = std::thread(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers)); // we don't need elements here after this, so can move
+      workThreads.emplace_back(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers)); // we don't need elements here after this, so can move
     }
   }
 
-  for (; pageNum <= numOfPages; pageNum++)
-  {
-    pageNumbers.push_back(pageNum);
-  }
-  if (pageNumbers.size() > 0)
-  {
-    workThreads[NUMOFTHREADS - 1] = std::thread(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers));
-  }
-
-  for (int threadNum = 0; threadNum < NUMOFTHREADS; threadNum++)
+  for (int threadNum = 0; threadNum < workThreads.size(); threadNum++)
   {
     if (workThreads[threadNum].joinable())
     {
       workThreads[threadNum].join();
     }
   }
-
-  //for (int pageNum = 1; pageNum <= numOfPages; pageNum++)
-  //{
-  //  coinMarketDataResponse = coins.getMarkets("usd", 0, "1h,24h,7d,14d,30d", 0, pageNum, 250, false, "id_asc");
-  //  m_coinList.Deserialize(coinMarketDataResponse.text); // deserialize all coins in page
-  //}
 
   {
     MeasureScopeTime(SortCoinList);
@@ -132,6 +118,7 @@ bool CryptoConnection::FillCoinList()
     MeasureScopeTime(DeserializePlatform);
     m_coinList.DeserializePlatform(doc);
   }
+
   m_SetupFinished = true;
   return true;
 }

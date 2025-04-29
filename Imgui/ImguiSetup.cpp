@@ -72,7 +72,6 @@ bool CreateDeviceD3D(HWND hWnd)
   sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
   UINT createDeviceFlags = 0;
-  //createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
   D3D_FEATURE_LEVEL featureLevel;
   const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
   if (D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext) != S_OK)
@@ -451,303 +450,265 @@ void RenderImgui()
     // Create Main Window
     ImGui::Begin("Main Window", &g_main_window, flags);
 
-    //// Menu bar
-    //if (ImGui::BeginMenuBar())
-    //{
-    //  if (ImGui::BeginMenu("File"))
-    //  {
-    //    if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-    //    if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
-    //    if (ImGui::MenuItem("Close", "Ctrl+W")) { g_main_window = false; }
-    //    ImGui::EndMenu();
-    //  }
-    //  ImGui::EndMenuBar();
-    //}
-
-    //// Tabs
-    //if (ImGui::BeginTabBar("Tabs", ImGuiTabBarFlags_None))
-    //{
-    //  if (ImGui::BeginTabItem("Main"))
-    //  {
-        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-        const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
-
-        if (!startedCryptoSetUp)
-        {
-          std::thread cryptoThread([](auto var) { AnalyzeCryptoData(var); }, std::ref(cryptoConnection)); // passing as ref as std::thread by default does a copy
-          cryptoThread.detach();
-          startedCryptoSetUp = true;
-        }
-
-
-        if (cryptoConnection.GetCoinsToParse() > 0 && cryptoConnection.GetCoinList().GetCoinList().size() < cryptoConnection.GetCoinsToParse() - 5) // ignoring 5 in case server decides to return a few less cryptos
-        {
-          ImGui::Text("Getting cryptocurrencies info from the server:  %d/%d", cryptoConnection.GetCoinList().GetCoinList().size(), cryptoConnection.GetCoinsToParse());
-          BufferingBar("##buffer_bar", ImVec2(viewport->WorkSize.x / cryptoConnection.GetCoinsToParse() * cryptoConnection.GetCoinList().GetCoinList().size(), viewport->WorkSize.y / 70), bg, col);
-        }
-
-        if (cryptoConnection.IsSetupFinished() && coinList.size() == 0)
-        {
-          coinList = cryptoConnection.GetCoinList().GetCoinList();
-        }
-
-        if (cryptoConnection.IsSetupFinished())
-        {
-          filter.Draw("Filter", 200.0f);
-          ImGui::SameLine();
-          static bool bscChecked = false;
-          if (ImGui::Checkbox("BSC coins", &bscChecked))
+    const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+    const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+    
+    if (!startedCryptoSetUp)
+    {
+      std::thread cryptoThread([](auto var) { AnalyzeCryptoData(var); }, std::ref(cryptoConnection)); // passing as ref as std::thread by default does a copy
+      cryptoThread.detach();
+      startedCryptoSetUp = true;
+    }
+    
+    
+    if (cryptoConnection.GetCoinsToParse() > 0 && cryptoConnection.GetCoinList().GetCoinList().size() < cryptoConnection.GetCoinsToParse() - 5) // ignoring 5 in case server decides to return a few less cryptos
+    {
+      ImGui::Text("Getting cryptocurrencies info from the server:  %d/%d", cryptoConnection.GetCoinList().GetCoinList().size(), cryptoConnection.GetCoinsToParse());
+      BufferingBar("##buffer_bar", ImVec2(viewport->WorkSize.x / cryptoConnection.GetCoinsToParse() * cryptoConnection.GetCoinList().GetCoinList().size(), viewport->WorkSize.y / 70), bg, col);
+    }
+    
+    if (cryptoConnection.IsSetupFinished() && coinList.size() == 0)
+    {
+      coinList = cryptoConnection.GetCoinList().GetCoinList();
+    }
+    
+    if (cryptoConnection.IsSetupFinished())
+    {
+      filter.Draw("Filter", 200.0f);
+      ImGui::SameLine();
+      static bool bscChecked = false;
+      if (ImGui::Checkbox("BSC coins", &bscChecked))
+      {
+        tableNeedsToBeRefiltered = true;
+      }
+      ImGui::SameLine();
+      static bool ethChecked = false;
+      if (ImGui::Checkbox("ETH coins", &ethChecked))
+      {
+        tableNeedsToBeRefiltered = true;
+      }
+    
+      // Options
+      static ImGuiTableFlags flags =
+        ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti
+        | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody
+        | ImGuiTableFlags_ScrollY;
+    
+      if (ImGui::BeginTable("Cryptocurrencies", 10, flags, ImVec2(0.0f, viewport->WorkSize.y / 4 * 2.8), 0.0f))
+      {
+        // Declare columns
+        // We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
+        // This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
+    
+        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthStretch, 0.0f, 0);
+        ImGui::TableSetupColumn("Price (USD)", ImGuiTableColumnFlags_WidthFixed, 0.0f, 1);
+        //ImGui::TableSetupColumn("Market cap", ImGuiTableColumnFlags_WidthFixed, 0.0f, 2);
+        ImGui::TableSetupColumn("ATL change", ImGuiTableColumnFlags_WidthFixed, 0.0f, 2);
+        ImGui::TableSetupColumn("Price change 1h", ImGuiTableColumnFlags_WidthFixed, 0.0f, 3);
+        ImGui::TableSetupColumn("Price change 24h", ImGuiTableColumnFlags_WidthFixed, 0.0f, 4);
+        ImGui::TableSetupColumn("Price change 7d", ImGuiTableColumnFlags_WidthFixed, 0.0f, 5);
+        ImGui::TableSetupColumn("Price change 14d", ImGuiTableColumnFlags_WidthFixed, 0.0f, 6);
+        ImGui::TableSetupColumn("Price change 30d", ImGuiTableColumnFlags_WidthFixed, 0.0f, 7);
+        ImGui::TableSetupColumn("More info", ImGuiTableColumnFlags_NoSort| ImGuiTableColumnFlags_WidthFixed, 0.0f, 8);
+        ImGui::TableSetupColumn("Buy link", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 0.0f, 9);
+        ImGui::TableSetupScrollFreeze(0, 1); // Make row always visible
+        ImGui::TableHeadersRow();
+    
+        // Sort our data if sort specs have been changed!
+        if (ImGuiTableSortSpecs* sorts_specs = ImGui::TableGetSortSpecs())
+          if (sorts_specs->SpecsDirty)
           {
             tableNeedsToBeRefiltered = true;
-          }
-          ImGui::SameLine();
-          static bool ethChecked = false;
-          if (ImGui::Checkbox("ETH coins", &ethChecked))
-          {
-            tableNeedsToBeRefiltered = true;
-          }
-
-          // Options
-          static ImGuiTableFlags flags =
-            ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti
-            | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody
-            | ImGuiTableFlags_ScrollY;
-
-          if (ImGui::BeginTable("Cryptocurrencies", 10, flags, ImVec2(0.0f, viewport->WorkSize.y / 4 * 2.8), 0.0f))
-          {
-            // Declare columns
-            // We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
-            // This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
-
-            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthStretch, 0.0f, 0);
-            ImGui::TableSetupColumn("Price (USD)", ImGuiTableColumnFlags_WidthFixed, 0.0f, 1);
-            //ImGui::TableSetupColumn("Market cap", ImGuiTableColumnFlags_WidthFixed, 0.0f, 2);
-            ImGui::TableSetupColumn("ATL change", ImGuiTableColumnFlags_WidthFixed, 0.0f, 2);
-            ImGui::TableSetupColumn("Price change 1h", ImGuiTableColumnFlags_WidthFixed, 0.0f, 3);
-            ImGui::TableSetupColumn("Price change 24h", ImGuiTableColumnFlags_WidthFixed, 0.0f, 4);
-            ImGui::TableSetupColumn("Price change 7d", ImGuiTableColumnFlags_WidthFixed, 0.0f, 5);
-            ImGui::TableSetupColumn("Price change 14d", ImGuiTableColumnFlags_WidthFixed, 0.0f, 6);
-            ImGui::TableSetupColumn("Price change 30d", ImGuiTableColumnFlags_WidthFixed, 0.0f, 7);
-            ImGui::TableSetupColumn("More info", ImGuiTableColumnFlags_NoSort| ImGuiTableColumnFlags_WidthFixed, 0.0f, 8);
-            ImGui::TableSetupColumn("Buy link", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 0.0f, 9);
-            ImGui::TableSetupScrollFreeze(0, 1); // Make row always visible
-            ImGui::TableHeadersRow();
-
-            // Sort our data if sort specs have been changed!
-            if (ImGuiTableSortSpecs* sorts_specs = ImGui::TableGetSortSpecs())
-              if (sorts_specs->SpecsDirty)
-              {
-                tableNeedsToBeRefiltered = true;
-                s_current_sort_specs = sorts_specs; // Store in variable accessible by the sort function.
-                if (coinList.size() > 1)
-                {
-                  MeasureScopeTime(SortImguiTable);
-                  std::sort(coinList.begin(), coinList.end(), CompareWithSortSpecs);
-                }
-                s_current_sort_specs = NULL;
-                sorts_specs->SpecsDirty = false;
-              }
-
-            bool someFilterIsOn = filter.IsActive() || bscChecked || ethChecked || tableNeedsToBeRefiltered;
-
-            // Demonstrate using clipper for large vertical lists
-            ImGuiListClipper clipper;
-            
-            // Filtering
-            if (someFilterIsOn)
+            s_current_sort_specs = sorts_specs; // Store in variable accessible by the sort function.
+            if (coinList.size() > 1)
             {
-              numOfFilterLetters = strlen(filter.InputBuf);
-              if (oldNumOfFilterLetters != numOfFilterLetters || tableNeedsToBeRefiltered) // don't use filter.IsActive() here or it will sort every frame
+              MeasureScopeTime(SortImguiTable);
+              std::sort(coinList.begin(), coinList.end(), CompareWithSortSpecs);
+            }
+            s_current_sort_specs = NULL;
+            sorts_specs->SpecsDirty = false;
+          }
+    
+        bool someFilterIsOn = filter.IsActive() || bscChecked || ethChecked || tableNeedsToBeRefiltered;
+    
+        // Demonstrate using clipper for large vertical lists
+        ImGuiListClipper clipper;
+        
+        // Filtering
+        if (someFilterIsOn)
+        {
+          numOfFilterLetters = strlen(filter.InputBuf);
+          if (oldNumOfFilterLetters != numOfFilterLetters || tableNeedsToBeRefiltered) // don't use filter.IsActive() here or it will sort every frame
+          {
+            filteredCoinList.clear();
+            oldNumOfFilterLetters = numOfFilterLetters;
+    
+            std::string filterLower = filter.InputBuf;
+            std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), [](unsigned char c) { return std::tolower(c); });
+    
+            int requiredPlatform = 0;
+            if (bscChecked)
+            {
+              requiredPlatform |= static_cast<int>(Coin::Platform::BINANCE_SMART_CHAIN);
+            }
+            if (ethChecked)
+            {
+              requiredPlatform |= static_cast<int>(Coin::Platform::ETHEREUM);
+            }
+    
+            std::copy_if(coinList.begin(), coinList.end(), std::back_inserter(filteredCoinList), 
+              [&filterLower, requiredPlatform](Coin coin)
+            {
+              // make sure letters are converted to lowercase before comparison
+              std::string coinLower = coin.m_name;
+              std::transform(coinLower.begin(), coinLower.end(), coinLower.begin(), [](unsigned char c) { return std::tolower(c); });
+          
+              if (coinLower.find(filterLower) != std::string::npos)
               {
-                filteredCoinList.clear();
-                oldNumOfFilterLetters = numOfFilterLetters;
-
-                std::string filterLower = filter.InputBuf;
-                std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), [](unsigned char c) { return std::tolower(c); });
-
-                int requiredPlatform = 0;
-                if (bscChecked)
+                // Letter pattern was found. Now let's filter by required platforms
+                if(requiredPlatform != 0)
                 {
-                  requiredPlatform |= static_cast<int>(Coin::Platform::BINANCE_SMART_CHAIN);
-                }
-                if (ethChecked)
-                {
-                  requiredPlatform |= static_cast<int>(Coin::Platform::ETHEREUM);
-                }
-
-                std::copy_if(coinList.begin(), coinList.end(), std::back_inserter(filteredCoinList), 
-                  [&filterLower, requiredPlatform](Coin coin)
-                {
-                  // make sure letters are converted to lowercase before comparison
-                  std::string coinLower = coin.m_name;
-                  std::transform(coinLower.begin(), coinLower.end(), coinLower.begin(), [](unsigned char c) { return std::tolower(c); });
-              
-                  if (coinLower.find(filterLower) != std::string::npos)
+                  for (auto coinPlatform : coin.m_platforms)
                   {
-                    // Letter pattern was found. Now let's filter by required platforms
-                    if(requiredPlatform != 0)
+                    if ((static_cast<int>(coinPlatform.first) & requiredPlatform) != 0)
                     {
-                      for (auto coinPlatform : coin.m_platforms)
-                      {
-                        if ((static_cast<int>(coinPlatform.first) & requiredPlatform) != 0)
-                        {
-                          return true;
-                        }
-                      }
-                      return false; // required platform not found
+                      return true;
                     }
-                    return true;
                   }
-                  else 
-                  { 
-                    return false; 
-                  }
-                });
-                tableNeedsToBeRefiltered = false;
+                  return false; // required platform not found
+                }
+                return true;
               }
-              clipper.Begin(filteredCoinList.size());
-            }
-            else
-            {
-              clipper.Begin(coinList.size());
-            }
-
-            ImVec4 buttonColor(0.72f, 0.33f, 0.82f, 1.0f);
-            // This processes only the amount of elements that visibly fit into the table, for example 45
-            while (clipper.Step())
-              for (int row_n = clipper.DisplayStart; row_n < clipper.DisplayEnd; row_n++)
-              {
-                // Display a data item
-                Coin* coin;
-                filter.IsActive() || bscChecked || ethChecked ? coin = &filteredCoinList[row_n] : coin = &coinList[row_n];
-
-                ImGui::PushID(coin->m_id.c_str());
-                ImGui::TableNextRow();
-
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(coin->m_name.c_str());
-
-                ImGui::TableNextColumn();
-                ImGui::Text("%.10g", coin->m_current_price);
-
-                ImGui::TableNextColumn();
-                //ImGui::Text("%f", coin->m_market_cap);
-                ImGui::Text("%f", coin->m_atl_change_percentage);
-
-                ImGui::TableNextColumn();
-                PrintNumberInTableWithColor(coin->m_price_change_percentage_1h_in_currency);
-
-                ImGui::TableNextColumn();
-                PrintNumberInTableWithColor(coin->m_price_change_percentage_24h_in_currency);
-
-                ImGui::TableNextColumn();
-                PrintNumberInTableWithColor(coin->m_price_change_percentage_7d_in_currency);
-
-                ImGui::TableNextColumn();
-                PrintNumberInTableWithColor(coin->m_price_change_percentage_14d_in_currency);
-
-                ImGui::TableNextColumn();
-                PrintNumberInTableWithColor(coin->m_price_change_percentage_30d_in_currency);
-
-                ImGui::TableNextColumn();
-                {
-                  // CoinGecko button
-                  // Potentially slow. We are checking every frame whether all buttons were already visited and searching a coin id in a set. The more buttons visited the slower.
-                  // Every coin could have additional flags... More RAM but saving on performance...
-                  bool alreadyVisitedOnCoingecko = coinsAlreadyCheckedOnCoingecko.find(coin->m_id) != coinsAlreadyCheckedOnCoingecko.end(); 
-                  if (alreadyVisitedOnCoingecko)
-                  {
-                    ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
-                  }
-                  if (ImGui::SmallButton("CG"))
-                  {
-                    std::wstring webPage = L"https://www.coingecko.com/en/coins/" + std::wstring(coin->m_id.begin(), coin->m_id.end());
-                    ShellExecute(0, 0, webPage.c_str(), 0, 0, SW_SHOW);
-                    coinsAlreadyCheckedOnCoingecko.insert(coin->m_id);
-                  }
-                  if (alreadyVisitedOnCoingecko)
-                  {
-                    ImGui::PopStyleColor();
-                  }
-                  if (ImGui::IsItemHovered())
-                  {
-                    ImGui::BeginTooltip();
-                    ImGui::Text("CoinGecko");
-                    ImGui::EndTooltip();
-                  }
-
-                  // CoinMarketCap button
-                  ImGui::SameLine();
-                  bool alreadyVisitedOnCMC = coinsAlreadyCheckedOnCMC.find(coin->m_id) != coinsAlreadyCheckedOnCMC.end();
-                  if (alreadyVisitedOnCMC)
-                  {
-                    ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
-                  }
-                  if (ImGui::SmallButton("CMC"))
-                  {
-                    std::wstring webPage = L"https://coinmarketcap.com/currencies/" + std::wstring(coin->m_id.begin(), coin->m_id.end());
-                    ShellExecute(0, 0, webPage.c_str(), 0, 0, SW_SHOW);
-                    coinsAlreadyCheckedOnCMC.insert(coin->m_id);
-                  }
-                  if (alreadyVisitedOnCMC)
-                  {
-                    ImGui::PopStyleColor();
-                  }
-
-                  if (ImGui::IsItemHovered())
-                  {
-                    ImGui::BeginTooltip();
-                    ImGui::Text("CoinMarketCap");
-                    ImGui::EndTooltip();
-                  }
-                }
-
-                // Buy Link button
-                ImGui::TableNextColumn();
-                bool alreadyVisitedBuyLink = coinsWithBuyLinkVisited.find(coin->m_id) != coinsWithBuyLinkVisited.end();
-                if (alreadyVisitedBuyLink)
-                {
-                  ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
-                }
-                if (ImGui::SmallButton("Visit##Buy"))
-                {
-                  const std::wstring buyLink = cryptoConnection.GetBuyLink(coin->m_id);
-                  if (!buyLink.empty())
-                  {
-                    ShellExecute(0, 0, buyLink.c_str(), 0, 0, SW_SHOW);
-                  }
-                  coinsWithBuyLinkVisited.insert(coin->m_id);
-                }
-                if (alreadyVisitedBuyLink)
-                {
-                  ImGui::PopStyleColor();
-                }
-
-                ImGui::PopID();
+              else 
+              { 
+                return false; 
               }
-            ImGui::EndTable();
+            });
+            tableNeedsToBeRefiltered = false;
           }
+          clipper.Begin(filteredCoinList.size());
         }
-
-    //    ImGui::EndTabItem();
-    //  }
-    //  if (ImGui::BeginTabItem("Broccoli"))
-    //  {
-    //    ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
-
-    //    // Plot some values
-    //    const float my_values[] = { 0.2f, 0.1f, 1.0f, 0.5f, 0.9f, 2.2f };
-    //    ImGui::PlotLines("Frame Times", my_values, IM_ARRAYSIZE(my_values));
-
-    //    ImGui::EndTabItem();
-    //  }
-    //  if (ImGui::BeginTabItem("Cucumber"))
-    //  {
-    //    ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
-    //    ImGui::EndTabItem();
-    //  }
-    //  ImGui::EndTabBar();
-    //}
+        else
+        {
+          clipper.Begin(coinList.size());
+        }
+    
+        ImVec4 buttonColor(0.72f, 0.33f, 0.82f, 1.0f);
+        // This processes only the amount of elements that visibly fit into the table, for example 45
+        while (clipper.Step())
+          for (int row_n = clipper.DisplayStart; row_n < clipper.DisplayEnd; row_n++)
+          {
+            // Display a data item
+            Coin* coin;
+            filter.IsActive() || bscChecked || ethChecked ? coin = &filteredCoinList[row_n] : coin = &coinList[row_n];
+    
+            ImGui::PushID(coin->m_id.c_str());
+            ImGui::TableNextRow();
+    
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(coin->m_name.c_str());
+    
+            ImGui::TableNextColumn();
+            ImGui::Text("%.10g", coin->m_current_price);
+    
+            ImGui::TableNextColumn();
+            //ImGui::Text("%f", coin->m_market_cap);
+            ImGui::Text("%f", coin->m_atl_change_percentage);
+    
+            ImGui::TableNextColumn();
+            PrintNumberInTableWithColor(coin->m_price_change_percentage_1h_in_currency);
+    
+            ImGui::TableNextColumn();
+            PrintNumberInTableWithColor(coin->m_price_change_percentage_24h_in_currency);
+    
+            ImGui::TableNextColumn();
+            PrintNumberInTableWithColor(coin->m_price_change_percentage_7d_in_currency);
+    
+            ImGui::TableNextColumn();
+            PrintNumberInTableWithColor(coin->m_price_change_percentage_14d_in_currency);
+    
+            ImGui::TableNextColumn();
+            PrintNumberInTableWithColor(coin->m_price_change_percentage_30d_in_currency);
+    
+            ImGui::TableNextColumn();
+            {
+              // CoinGecko button
+              // Potentially slow. We are checking every frame whether all buttons were already visited and searching a coin id in a set. The more buttons visited the slower.
+              // Every coin could have additional flags... More RAM but saving on performance...
+              bool alreadyVisitedOnCoingecko = coinsAlreadyCheckedOnCoingecko.find(coin->m_id) != coinsAlreadyCheckedOnCoingecko.end(); 
+              if (alreadyVisitedOnCoingecko)
+              {
+                ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
+              }
+              if (ImGui::SmallButton("CG"))
+              {
+                std::wstring webPage = L"https://www.coingecko.com/en/coins/" + std::wstring(coin->m_id.begin(), coin->m_id.end());
+                ShellExecute(0, 0, webPage.c_str(), 0, 0, SW_SHOW);
+                coinsAlreadyCheckedOnCoingecko.insert(coin->m_id);
+              }
+              if (alreadyVisitedOnCoingecko)
+              {
+                ImGui::PopStyleColor();
+              }
+              if (ImGui::IsItemHovered())
+              {
+                ImGui::BeginTooltip();
+                ImGui::Text("CoinGecko");
+                ImGui::EndTooltip();
+              }
+    
+              // CoinMarketCap button
+              ImGui::SameLine();
+              bool alreadyVisitedOnCMC = coinsAlreadyCheckedOnCMC.find(coin->m_id) != coinsAlreadyCheckedOnCMC.end();
+              if (alreadyVisitedOnCMC)
+              {
+                ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
+              }
+              if (ImGui::SmallButton("CMC"))
+              {
+                std::wstring webPage = L"https://coinmarketcap.com/currencies/" + std::wstring(coin->m_id.begin(), coin->m_id.end());
+                ShellExecute(0, 0, webPage.c_str(), 0, 0, SW_SHOW);
+                coinsAlreadyCheckedOnCMC.insert(coin->m_id);
+              }
+              if (alreadyVisitedOnCMC)
+              {
+                ImGui::PopStyleColor();
+              }
+    
+              if (ImGui::IsItemHovered())
+              {
+                ImGui::BeginTooltip();
+                ImGui::Text("CoinMarketCap");
+                ImGui::EndTooltip();
+              }
+            }
+    
+            // Buy Link button
+            ImGui::TableNextColumn();
+            bool alreadyVisitedBuyLink = coinsWithBuyLinkVisited.find(coin->m_id) != coinsWithBuyLinkVisited.end();
+            if (alreadyVisitedBuyLink)
+            {
+              ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
+            }
+            if (ImGui::SmallButton("Visit##Buy"))
+            {
+              const std::wstring buyLink = cryptoConnection.GetBuyLink(coin->m_id);
+              if (!buyLink.empty())
+              {
+                ShellExecute(0, 0, buyLink.c_str(), 0, 0, SW_SHOW);
+              }
+              coinsWithBuyLinkVisited.insert(coin->m_id);
+            }
+            if (alreadyVisitedBuyLink)
+            {
+              ImGui::PopStyleColor();
+            }
+    
+            ImGui::PopID();
+          }
+        ImGui::EndTable();
+      }
+    }
 
     DrawLogWindow();
 

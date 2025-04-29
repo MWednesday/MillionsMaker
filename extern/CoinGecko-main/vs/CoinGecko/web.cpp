@@ -1,18 +1,28 @@
 #include "web.h"
 
+gecko::API_Configuration* gecko::API_Config = nullptr;
+
 cpr::Response gecko::web::request(REQUIRED std::string endpointPath, OPTIONAL cpr::Parameters* parameters)
 {
+	if (!gecko::API_Config)
+	{
+		cpr::Response r;
+		r.error.code = cpr::ErrorCode::FAILED_INIT;
+		r.error.message = "Coingecko API_config has not been initialized. Make sure you do that before web calls";
+		return r;
+	}
+
 	cpr::Parameters params;
 	if (parameters)
 	{
 		params = *parameters;
 	}
 
-	cpr::Parameter apiKey("x_cg_demo_api_key", "CG-6QuWoeB9HcwmbsjwLpEMCcjJ");
+	cpr::Parameter apiKey(gecko::API_Config->API_HEADER, gecko::API_Config->API_KEY);
 	params.Add(apiKey);
 
 	cpr::Response r = cpr::Get(
-		cpr::Url { this->endpoint + endpointPath},
+		cpr::Url { gecko::API_Config->API_ENDPOINT + endpointPath},
 		params, cpr::SslOptions()
 	);
 
