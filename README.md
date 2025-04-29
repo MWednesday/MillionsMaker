@@ -12,4 +12,4 @@ It uses IMGUI for GUI, uses CoinGecko API and many work threads to quickly downl
 ## Setup
 After you build the MillionsMaker, you might need to copy dependency dlls into the exe folder.
 
-Also, you will need to fill config.ini with your CoinGecko API key.
+Also, you will need to create a *config.ini* with your CoinGecko API key. At *\extern\CoinGecko-main\config.ini*
