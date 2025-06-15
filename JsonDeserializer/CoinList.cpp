@@ -1,25 +1,25 @@
-#pragma optimize("", off)
-
 #include "CoinList.h"
-#include "Logging.h"
 #include "ScopeTimer.h"
 #include <algorithm> // find_if
-#include <iostream>
 
 bool CoinList::Deserialize(const rapidjson::Value & arrayFile)
 {
   if (arrayFile.IsArray())
   {
+#ifdef _DEBUG
+    std::string info;
+#endif
     for (const rapidjson::Value & coinData : arrayFile.GetArray())
     {
       Coin coin;
       coin.Deserialize(coinData);
       m_lock.lock();
-      m_CoinList.push_back(coin);   // TO DO don't need 2 coin lists
-      m_CoinList2.insert(coin);
+      m_CoinList.push_back(coin);
       m_lock.unlock();
-      std::string info = "Added " + coin.m_name + " to the coin list.";
-      ReportDebug(info.c_str()); // passing preformatted string to avoid ??? in some coin names
+#ifdef _DEBUG
+      info = "Added " + coin.m_name + " to the coin list.";
+      ReportDebug(info.c_str()); // Passing preformatted string to avoid ??? in some coin names. TODO: Check the reasons
+#endif
     }
   }
   else
@@ -29,9 +29,9 @@ bool CoinList::Deserialize(const rapidjson::Value & arrayFile)
   return true;
 }
 
-Coin::Platform CoinList::DeterminePlatform(std::string platformString)
+Coin::Platform CoinList::DeterminePlatform(const std::string& platformString)
 {
-  if (platformString == "ethereum")
+  if (platformString == "ethereum") // TODO: could check performance of if-else vs switch statement
   {
     return Coin::Platform::ETHEREUM;
   }
@@ -164,10 +164,10 @@ bool CoinList::DeserializePlatform(const rapidjson::Value& arrayFile)
 {
   if (arrayFile.IsArray())
   {
-    std::string platformName = "";
-    std::string platformAddress = "";
+    std::string platformName;
+    std::string platformAddress;
     Coin::Platform platformToInsert = Coin::Platform::UNSET;
-    std::string coinID = "";
+    std::string coinID;
 
     for (const rapidjson::Value& coinData : arrayFile.GetArray())
     {
@@ -186,7 +186,7 @@ bool CoinList::DeserializePlatform(const rapidjson::Value& arrayFile)
 
         if (it != m_CoinList.end())
         {
-          it->m_platforms.insert({ platformToInsert, platformAddress });
+          it->m_platforms.emplace( platformToInsert, std::move(platformAddress) );
         }
         else
         {
@@ -201,16 +201,6 @@ bool CoinList::DeserializePlatform(const rapidjson::Value& arrayFile)
     return false;
   }
   return true;
-}
-
-void CoinList::PrintInfo()
-{
-  std::cout << std::endl;
-  for (Coin coin : m_CoinList)
-  {
-    coin.PrintInfo();
-    std::cout << std::endl;
-  }
 }
 
 void CoinList::SortCoinList()

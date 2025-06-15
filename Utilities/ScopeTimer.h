@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <string>
-#include <ctime>  
 #include "Logging.h"
 
 class ScopeTimer
@@ -12,9 +11,9 @@ private:
 	std::string m_timer_name;
 
 public:
-	ScopeTimer(std::string name)
+	ScopeTimer(std::string&& name)
 	{
-		m_timer_name = name;
+		m_timer_name = std::move(name);
 		m_start_time = std::chrono::high_resolution_clock::now();
 	}
 

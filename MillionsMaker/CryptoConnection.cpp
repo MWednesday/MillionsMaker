@@ -5,9 +5,7 @@
 #include <codecvt> // std::wstring_convert
 #include "ScopeTimer.h"
 
-#pragma optimize("", off)
-
-const bool CheckError(const gecko::web::response& response)
+bool IsError(const gecko::web::response& response)
 {
   // https://support.coingecko.com/hc/en-us/articles/6472757474457-How-can-I-differentiate-between-the-status-codes-I-am-receiving-and-what-do-they-mean
 
@@ -29,13 +27,9 @@ void CryptoConnection::GetCoinInfoAndDeserialize(std::vector<int> pageNumbers)
 
   for (int i = 0; i < pageNumbers.size();)
   {
-    if (pageNumbers[i] == 0)
-    {
-      volatile int i = 0;
-    }
     coinMarketDataResponse = coins.getMarkets("usd", 0, "1h,24h,7d,14d,30d", 0, pageNumbers[i], 250, false, "id_asc");
 
-    if (CheckError(coinMarketDataResponse))
+    if (IsError(coinMarketDataResponse))
     {
       if (pageNumbers[i] != lastReportedPage)
       {
@@ -46,7 +40,7 @@ void CryptoConnection::GetCoinInfoAndDeserialize(std::vector<int> pageNumbers)
       continue;
     }
 
-    m_coinList.Deserialize(coinMarketDataResponse.text); // deserialize all coins in page
+    m_CoinList.Deserialize(coinMarketDataResponse.text); // deserialize all coins in page
     ReportDebug("Processed all coins in page %u", pageNumbers[i]);
     i++;
   }
@@ -77,14 +71,14 @@ bool CryptoConnection::FillCoinList()
     return false;
   }
 
-  m_coinsToParse = doc.GetArray().Size(); // Modify this to a number like 500 for faster launch during development
-  const int numOfPages = ceil(m_coinsToParse / 250.0);
+  m_CoinsToParse = doc.GetArray().Size(); // Modify this to a number like 500 for faster launch during development
+  const int numOfPages = ceil(m_CoinsToParse / 250.0);
   
-  const int numOfThreads = std::thread::hardware_concurrency();
+  const int numOfThreads = std::thread::hardware_concurrency() - 2; // Leave some threads for other work
   std::vector<std::thread> workThreads;
   workThreads.reserve(numOfThreads);
 
-  int pagesPerThread = ceil((float)numOfPages / numOfThreads);
+  const int pagesPerThread = ceil((float)numOfPages / numOfThreads);
 
   int pageNum = 1;
   std::vector<int> pageNumbers;
@@ -95,9 +89,9 @@ bool CryptoConnection::FillCoinList()
       pageNumbers.push_back(pageNum);
     }
 
-    if (pageNumbers.size() > 0)
+    if (!pageNumbers.empty())
     {
-      workThreads.emplace_back(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers)); // we don't need elements here after this, so can move
+      workThreads.emplace_back(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers));
     }
   }
 
@@ -111,12 +105,12 @@ bool CryptoConnection::FillCoinList()
 
   {
     MeasureScopeTime(SortCoinList);
-    m_coinList.SortCoinList();
+    m_CoinList.SortCoinList();
   }
 
   {
     MeasureScopeTime(DeserializePlatform);
-    m_coinList.DeserializePlatform(doc);
+    m_CoinList.DeserializePlatform(doc);
   }
 
   m_SetupFinished = true;
@@ -126,22 +120,20 @@ bool CryptoConnection::FillCoinList()
 void CryptoConnection::SyncCryptoDataFromCoinGecko()
 {
   std::string allCoins;
-  m_coinList.Deserialize(allCoins);
+  m_CoinList.Deserialize(allCoins);
   FillCoinList();
-  ReportInfo("\nCoin list size = %d\n\n", m_coinList.GetCoinList().size());
+  ReportInfo("\nCoin list size = %d\n\n", m_CoinList.GetCoinList().size());
 }
 
 void CryptoConnection::ScanAndReportSuccessfulCoins()
 {
-  std::set<Coin> successfulCoins;
-  for (Coin coin : m_coinList.GetCoinList())
+  for (const Coin& coin : m_CoinList.GetCoinList())
   {
     if (coin.m_price_change_percentage_1h_in_currency > 10 &&
-      coin.m_price_change_percentage_24h_in_currency > 20 &&
-      coin.m_price_change_percentage_7d_in_currency > 100 &&
-      coin.m_price_change_percentage_14d_in_currency > 100)
+        coin.m_price_change_percentage_24h_in_currency > 20 &&
+        coin.m_price_change_percentage_7d_in_currency > 100 &&
+        coin.m_price_change_percentage_14d_in_currency > 100)
     {
-      successfulCoins.insert(coin);
       ReportInfo("%s grew: 1h = %f%%,   24h = %f%%,  7d = %f%%,   14d = %f%%", coin.m_name.c_str(), coin.m_price_change_percentage_1h_in_currency, coin.m_price_change_percentage_24h_in_currency, coin.m_price_change_percentage_7d_in_currency, coin.m_price_change_percentage_14d_in_currency);
     }
   }
@@ -185,8 +177,8 @@ std::wstring CryptoConnection::GetBuyLink(const std::string& coinID)
   }
 
   const rapidjson::Value& platforms = doc["platforms"];
-  std::string platform("");
-  std::string address("");
+  std::string platform;
+  std::string address;
   if (platforms.MemberCount() > 0)
   {
     // the first element should be the main platform
@@ -194,7 +186,7 @@ std::wstring CryptoConnection::GetBuyLink(const std::string& coinID)
     address = platforms.MemberBegin()->value.GetString();
   }
 
-  std::string buy_link = "";
+  std::string buy_link;
   if (platform == "ethereum" && address != "")
   {
     buy_link = "https://app.uniswap.org/#/swap?outputCurrency=" + address;

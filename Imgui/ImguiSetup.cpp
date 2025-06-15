@@ -1,12 +1,9 @@
 #include "ImguiSetup.h"
-#include <cstring>
-#include "imgui.h"
 #include "CryptoConnection.h"
-#include <algorithm>
-#include <cctype>
 #include "ScopeTimer.h"
-
-#pragma optimize("", off)
+#include "imgui_internal.h"
+#include <algorithm>
+#include <set>
 
 MessageLog g_log;
 
@@ -89,7 +86,6 @@ void CleanupDeviceD3D()
   if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
 }
 
-//#include <atlstr.h> // CA2CT
 void PrintMessageWithCorrectColor(MessageType type, const char* line_start, const char* line_end)
 {
   if (type == MessageType::Debug)
@@ -99,8 +95,6 @@ void PrintMessageWithCorrectColor(MessageType type, const char* line_start, cons
   else // pick color
   {
     size_t text_line_size = line_end + 2 - line_start;
-    //std::string message = "Will allocated new char of size: " + std::to_string(text_line_size) + "\n";
-    //OutputDebugString(CA2CT(message.c_str()));
     char* text_line = new char[text_line_size];
     strncpy_s(text_line, text_line_size, line_start, text_line_size - 1);
 
@@ -131,7 +125,9 @@ void MessageLog::Draw(bool* p_open)
 
   // Main window
   if (ImGui::Button("Options"))
-    ImGui::OpenPopup("Options");
+  {
+      ImGui::OpenPopup("Options");
+  }
   ImGui::SameLine();
   bool clear = ImGui::Button("Clear");
   ImGui::SameLine();
@@ -229,7 +225,6 @@ void DrawLogWindow()
   ImGui::End();
 }
 
-#include "imgui_internal.h"
 bool BufferingBar(const char* label, const ImVec2& size_arg, const ImU32& bg_col, const ImU32& fg_col)
 {
   ImGuiWindow* window = ImGui::GetCurrentWindow();
@@ -404,14 +399,14 @@ void RenderImgui()
   std::vector<Coin> coinList;
 
   ImGuiTextFilter filter;
-  std::vector<Coin> filteredCoinList;
+  std::vector<Coin> filteredCoinList; // TODO: instead of making copies here, consider using something like std::vector<int> with just indexes into full list
   int oldNumOfFilterLetters = 0;
   int numOfFilterLetters = 0;
 
   bool startedCryptoSetUp = false;
   bool tableNeedsToBeRefiltered = false;
 
-  std::set<std::string> coinsAlreadyCheckedOnCoingecko; // search is faster in set than in vector
+  std::set<std::string> coinsAlreadyCheckedOnCoingecko; // search is faster in set than in vector. TODO: consider using unordered_set. Btw check if we can use some int instead of string. Maybe we can add a unique int ID to each Coin
   std::set<std::string> coinsAlreadyCheckedOnCMC;
   std::set<std::string> coinsWithBuyLinkVisited;
 
@@ -460,14 +455,13 @@ void RenderImgui()
       startedCryptoSetUp = true;
     }
     
-    
     if (cryptoConnection.GetCoinsToParse() > 0 && cryptoConnection.GetCoinList().GetCoinList().size() < cryptoConnection.GetCoinsToParse() - 5) // ignoring 5 in case server decides to return a few less cryptos
     {
       ImGui::Text("Getting cryptocurrencies info from the server:  %d/%d", cryptoConnection.GetCoinList().GetCoinList().size(), cryptoConnection.GetCoinsToParse());
       BufferingBar("##buffer_bar", ImVec2(viewport->WorkSize.x / cryptoConnection.GetCoinsToParse() * cryptoConnection.GetCoinList().GetCoinList().size(), viewport->WorkSize.y / 70), bg, col);
     }
     
-    if (cryptoConnection.IsSetupFinished() && coinList.size() == 0)
+    if (cryptoConnection.IsSetupFinished() && coinList.empty())
     {
       coinList = cryptoConnection.GetCoinList().GetCoinList();
     }
@@ -560,7 +554,7 @@ void RenderImgui()
               [&filterLower, requiredPlatform](Coin coin)
             {
               // make sure letters are converted to lowercase before comparison
-              std::string coinLower = coin.m_name;
+              std::string coinLower = coin.m_name; // TODO: implement a way without making a copy. Perhaps std::search and maybe with C++20 ranges
               std::transform(coinLower.begin(), coinLower.end(), coinLower.begin(), [](unsigned char c) { return std::tolower(c); });
           
               if (coinLower.find(filterLower) != std::string::npos)

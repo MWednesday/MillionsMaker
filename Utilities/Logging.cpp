@@ -9,7 +9,7 @@ void FormatAndPrintMessage(MessageType type, std::string message, ...)
 
   // If at the beginning of the string user added \n, make sure we add empty line.
   const size_t supportedNewLines = 5;
-  std::string newLines = "";
+  std::string newLines;
   for (int i = 0; i < supportedNewLines; i++)
   {
     if (*(message.begin() + i) == '\n')
@@ -19,7 +19,7 @@ void FormatAndPrintMessage(MessageType type, std::string message, ...)
   }
   message.erase(message.begin(), message.begin() + newLines.size());
 
-  std::string messageTypeString = "";
+  std::string messageTypeString;
   switch (type)
   {
   case MessageType::Debug:

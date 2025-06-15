@@ -1,20 +1,7 @@
-#include <string>
 #include "JSONBase.h"
 #include <fstream>
 #include <sstream>
-#include <iostream>
 #include "Logging.h"
-
-#pragma optimize("", off)
-
-//std::string JSONBase::Serialize() const
-//{
-//	rapidjson::StringBuffer ss;
-//	rapidjson::Writer<rapidjson::StringBuffer> writer(ss);		// Can also use Writer for condensed formatting
-//	if (Serialize(&writer))
-//		return ss.GetString();
-//	return "";
-//}
 
 bool JSONBase::Deserialize(const std::string& s)
 {
@@ -37,17 +24,6 @@ bool JSONBase::DeserializeFromFile(const std::string& filePath)
 	return Deserialize(buffer.str());
 }
 
-//bool JSONBase::SerializeToFile(const std::string& filePath)
-//{
-//	std::ofstream f(filePath);
-//	std::string s = Serialize();
-//	f << s;
-//	f.flush();
-//	f.close();
-//
-//	return true;
-//}
-
 bool JSONBase::InitDocument(const std::string& s, rapidjson::Document& doc)
 {
 	if (s.empty())
@@ -55,13 +31,13 @@ bool JSONBase::InitDocument(const std::string& s, rapidjson::Document& doc)
 
 	std::string validJson(s);
 
-	bool successful = !doc.Parse(validJson.c_str()).HasParseError() ? true : false;
+	bool successful = !doc.Parse(validJson.c_str()).HasParseError();
 
-  rapidjson::ParseErrorCode error = doc.GetParseError();
-  if (error != rapidjson::ParseErrorCode::kParseErrorNone)
-  {
-		ReportError("Failed to parse json! Error code: %u", error);
-  }
-
-  return successful;
+    rapidjson::ParseErrorCode error = doc.GetParseError();
+    if (error != rapidjson::ParseErrorCode::kParseErrorNone)
+    {
+	  	ReportError("Failed to parse json! Error code: %u", error);
+    }
+    
+    return successful;
 }

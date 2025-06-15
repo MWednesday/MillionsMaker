@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35707.178 d17.12
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MillionsMaker", "MillionsMaker\MillionsMaker.vcxproj", "{E7DCABD2-BC0F-42D8-95E4-951E24B0A248}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -33,7 +33,6 @@ Global
 		{8CE113C5-AFD6-4975-9BDA-14BE45950494}.Debug|x64.ActiveCfg = Debug|x64
 		{8CE113C5-AFD6-4975-9BDA-14BE45950494}.Debug|x64.Build.0 = Debug|x64
 		{8CE113C5-AFD6-4975-9BDA-14BE45950494}.Release|x64.ActiveCfg = Release|x64
-		{8CE113C5-AFD6-4975-9BDA-14BE45950494}.Release|x64.Build.0 = Release|x64
 		{C2F996E9-035B-4200-AB04-2616A2B561BA}.Debug|x64.ActiveCfg = Debug|x64
 		{C2F996E9-035B-4200-AB04-2616A2B561BA}.Debug|x64.Build.0 = Debug|x64
 		{C2F996E9-035B-4200-AB04-2616A2B561BA}.Release|x64.ActiveCfg = Release|x64

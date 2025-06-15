@@ -4,10 +4,16 @@
 
 namespace BasicLogging
 {
-  void RegisterBasicLoggers()
+  void RegisterBasicLoggers(bool logDebugString, bool logCout)
   {
-    g_Loggers.emplace_back(BasicLogging::LogOutputDebugString);
-    g_Loggers.emplace_back(BasicLogging::LogCout);
+      if (logDebugString)
+      {
+          g_Loggers.emplace_back(BasicLogging::LogOutputDebugString);
+      }
+      if (logCout)
+      {
+          g_Loggers.emplace_back(BasicLogging::LogCout);
+      }
   }
 
   void LogOutputDebugString(const Message& message)

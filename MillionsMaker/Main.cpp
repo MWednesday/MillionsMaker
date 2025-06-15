@@ -1,15 +1,7 @@
-//#include "pch.h"
-#include <iostream>
-#include <string>
-#include <math.h>
-
-#include "gecko.h"
-
 #include <direct.h> // _getcwd
+#include "gecko.h"
 #include "BasicLoggers.h"
-#include <set>
 #include "ImguiSetup.h"
-#include "CryptoConnection.h"
 
 
 std::string get_working_path()
@@ -84,11 +76,9 @@ std::string get_working_path()
 //}
 
 
-#include <windows.h>
-#include <processthreadsapi.h>
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
-  BasicLogging::RegisterBasicLoggers();
+  BasicLogging::RegisterBasicLoggers(true, false);
   g_Loggers.emplace_back(std::bind(&MessageLog::AddLog, &g_log, std::placeholders::_1));
 
   std::thread renderingThread([]() { SetupAndRenderImgui(); });

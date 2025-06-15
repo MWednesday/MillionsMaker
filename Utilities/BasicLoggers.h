@@ -4,7 +4,7 @@
 
 namespace BasicLogging
 {
-  void RegisterBasicLoggers(); // Call this at the beginning of your program
+  void RegisterBasicLoggers(bool logDebugString = true, bool logCout = true); // Call this at the beginning of your program
   void LogOutputDebugString(const Message& message);
   void LogCout(const Message& message);
 }

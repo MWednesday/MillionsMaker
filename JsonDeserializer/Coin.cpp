@@ -1,9 +1,5 @@
-#pragma optimize("", off)
-
 #include "Coin.h"
-#include "Logging.h"
 #include <algorithm>
-#include <iostream>
 
 bool Coin::Serialize(rapidjson::Writer<rapidjson::StringBuffer> * writer) const
 {
@@ -36,25 +32,7 @@ bool Coin::Deserialize(const rapidjson::Value & obj)
   m_price_change_percentage_7d_in_currency =  obj["price_change_percentage_7d_in_currency"].IsNumber()  ? obj["price_change_percentage_7d_in_currency"].GetFloat() : m_price_change_percentage_7d_in_currency;
 
   std::replace(m_name.begin(), m_name.end(), '%', '\%'); // replacing to avoid issues during formatting
+  // TODO investigate if it would be possible or worth it to print emoticons as well instead of "?" It is possible that additional settings would need to be enabled in Imgui. Maybe at least monochrome versions
 
   return true;
-}
-
-void Coin::PrintInfo()
-{
-  std::cout <<
-    " id = " << m_id <<
-    "\n name = " << m_name <<
-    "\n current_price = " << m_current_price <<
-    "\n market_cap = " << m_market_cap <<
-    "\n market_cap_rank = " << m_market_cap_rank <<
-    "\n ath = " << m_ath <<
-    "\n ath_change_percentage = " << m_ath_change_percentage <<
-    "\n ath_date = " << m_ath_date <<
-    "\n atl = " << m_atl <<
-    "\n atl_change_percentage = " << m_atl_change_percentage <<
-    "\n atl_date = " << m_atl_date <<
-    "\n price_change_percentage_14d_in_currency = " << m_price_change_percentage_14d_in_currency <<
-    "\n price_change_percentage_24h_in_currency = " << m_price_change_percentage_24h_in_currency <<
-    "\n price_change_percentage_7d_in_currency = " << m_price_change_percentage_7d_in_currency << std::endl;
 }
