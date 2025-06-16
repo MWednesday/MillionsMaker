@@ -2,7 +2,7 @@
 #include "gecko.h"
 #include "BasicLoggers.h"
 #include "ImguiSetup.h"
-
+#include "ThreadName.h"
 
 std::string get_working_path()
 {
@@ -78,10 +78,12 @@ std::string get_working_path()
 
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
+  SetCurrentThreadName("Main");
   BasicLogging::RegisterBasicLoggers(true, false);
   g_Loggers.emplace_back(std::bind(&MessageLog::AddLog, &g_log, std::placeholders::_1));
 
   std::thread renderingThread([]() { SetupAndRenderImgui(); });
+  SetThreadName(renderingThread, "Rendering");
 
   const std::string configName = "config.ini";
   if(!gecko::api::Initialize(configName))

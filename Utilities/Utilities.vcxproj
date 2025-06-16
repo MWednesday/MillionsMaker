@@ -18,6 +18,7 @@
     <ClInclude Include="BasicLoggers.h" />
     <ClInclude Include="Logging.h" />
     <ClInclude Include="ScopeTimer.h" />
+    <ClInclude Include="ThreadName.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

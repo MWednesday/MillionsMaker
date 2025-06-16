@@ -4,6 +4,7 @@
 #include "JSONBase.h"
 #include <codecvt> // std::wstring_convert
 #include "ScopeTimer.h"
+#include "ThreadName.h"
 
 bool IsError(const gecko::web::response& response)
 {
@@ -74,7 +75,7 @@ bool CryptoConnection::FillCoinList()
   m_CoinsToParse = doc.GetArray().Size(); // Modify this to a number like 500 for faster launch during development
   const int numOfPages = ceil(m_CoinsToParse / 250.0);
   
-  const int numOfThreads = std::thread::hardware_concurrency() - 2; // Leave some threads for other work
+  const int numOfThreads = std::thread::hardware_concurrency() - 3; // Leave some threads for other work
   std::vector<std::thread> workThreads;
   workThreads.reserve(numOfThreads);
 
@@ -82,6 +83,7 @@ bool CryptoConnection::FillCoinList()
 
   int pageNum = 1;
   std::vector<int> pageNumbers;
+  char threadName[22] = "Crypto Downloader ";
   for (int threadNum = 0; threadNum < numOfThreads - 1; threadNum++)
   {
     for (int k = 0; k < pagesPerThread && pageNum <= numOfPages; k++, pageNum++)
@@ -91,7 +93,9 @@ bool CryptoConnection::FillCoinList()
 
     if (!pageNumbers.empty())
     {
-      workThreads.emplace_back(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers));
+      std::thread& thread = workThreads.emplace_back(&CryptoConnection::GetCoinInfoAndDeserialize, this, std::move(pageNumbers));
+      std::snprintf(threadName + 18, sizeof(threadName) - 18, "%d", threadNum);
+      SetThreadName(thread, threadName);
     }
   }
 

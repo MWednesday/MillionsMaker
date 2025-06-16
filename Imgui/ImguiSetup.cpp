@@ -1,6 +1,7 @@
 #include "ImguiSetup.h"
 #include "CryptoConnection.h"
 #include "ScopeTimer.h"
+#include "ThreadName.h"
 #include "imgui_internal.h"
 #include <algorithm>
 #include <set>
@@ -315,7 +316,6 @@ void AnalyzeCryptoData(CryptoConnection& cryptoConnection)
 void SetupImguiWindow()
 {
   // Create application window
-//ImGui_ImplWin32_EnableDpiAwareness();
   WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("Millions Maker"), NULL };
   ::RegisterClassEx(&wc);
   HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("Millions Maker"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
@@ -399,7 +399,7 @@ void RenderImgui()
   std::vector<Coin> coinList;
 
   ImGuiTextFilter filter;
-  std::vector<Coin> filteredCoinList; // TODO: instead of making copies here, consider using something like std::vector<int> with just indexes into full list
+  std::vector<int> filteredCoinList; // contains indexes into coinList. Avoids making copies of coins!
   int oldNumOfFilterLetters = 0;
   int numOfFilterLetters = 0;
 
@@ -451,6 +451,7 @@ void RenderImgui()
     if (!startedCryptoSetUp)
     {
       std::thread cryptoThread([](auto var) { AnalyzeCryptoData(var); }, std::ref(cryptoConnection)); // passing as ref as std::thread by default does a copy
+      SetThreadName(cryptoThread, "Crypto Sync");
       cryptoThread.detach();
       startedCryptoSetUp = true;
     }
@@ -463,11 +464,13 @@ void RenderImgui()
     
     if (cryptoConnection.IsSetupFinished() && coinList.empty())
     {
-      coinList = cryptoConnection.GetCoinList().GetCoinList();
+      coinList = cryptoConnection.GetCoinList().GetCoinList(); // This list should never change after this. Then we can use indexes of vector as free permanent IDs for coins which is great for optimizations.
     }
     
     if (cryptoConnection.IsSetupFinished())
     {
+        // TODO implement? const std::vector<Coin>& coinList = cryptoConnection.GetCoinList().GetCoinList(); // This list must never change after this. This way we can use indexes of vector as free permanent IDs for coins which is great for optimizations.
+
       filter.Draw("Filter", 200.0f);
       ImGui::SameLine();
       static bool bscChecked = false;
@@ -512,6 +515,8 @@ void RenderImgui()
         if (ImGuiTableSortSpecs* sorts_specs = ImGui::TableGetSortSpecs())
           if (sorts_specs->SpecsDirty)
           {
+            // If the user presses on the same column and only the sorting direction changes, then we actually could get away
+            // with chaning the direction of drawing, instead of resorting again. But the code below sorts.
             tableNeedsToBeRefiltered = true;
             s_current_sort_specs = sorts_specs; // Store in variable accessible by the sort function.
             if (coinList.size() > 1)
@@ -537,9 +542,6 @@ void RenderImgui()
             filteredCoinList.clear();
             oldNumOfFilterLetters = numOfFilterLetters;
     
-            std::string filterLower = filter.InputBuf;
-            std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), [](unsigned char c) { return std::tolower(c); });
-    
             int requiredPlatform = 0;
             if (bscChecked)
             {
@@ -549,35 +551,38 @@ void RenderImgui()
             {
               requiredPlatform |= static_cast<int>(Coin::Platform::ETHEREUM);
             }
-    
-            std::copy_if(coinList.begin(), coinList.end(), std::back_inserter(filteredCoinList), 
-              [&filterLower, requiredPlatform](Coin coin)
+            
+            std::string filterText = filter.InputBuf;
+
+            for (size_t index = 0; index < coinList.size(); index++)
             {
-              // make sure letters are converted to lowercase before comparison
-              std::string coinLower = coin.m_name; // TODO: implement a way without making a copy. Perhaps std::search and maybe with C++20 ranges
-              std::transform(coinLower.begin(), coinLower.end(), coinLower.begin(), [](unsigned char c) { return std::tolower(c); });
-          
-              if (coinLower.find(filterLower) != std::string::npos)
-              {
-                // Letter pattern was found. Now let's filter by required platforms
-                if(requiredPlatform != 0)
+                // filter by name
+                auto compareLowercaseChars = [](char a, char b) {
+                    return std::tolower((unsigned char)(a)) == std::tolower((unsigned char)(b));
+                    }; 
+
+                bool foundNameMatch = std::search(
+                    coinList[index].m_name.begin(), coinList[index].m_name.end(),
+                    filterText.begin(), filterText.end(),
+                    compareLowercaseChars)   != coinList[index].m_name.end();
+
+                if (foundNameMatch)
                 {
-                  for (auto coinPlatform : coin.m_platforms)
-                  {
-                    if ((static_cast<int>(coinPlatform.first) & requiredPlatform) != 0)
+                    // Letter pattern was found. Now let's filter by required platforms
+                    if (requiredPlatform != 0)
                     {
-                      return true;
+                        for (auto coinPlatform : coinList[index].m_platforms)
+                        {
+                            if ((static_cast<int>(coinPlatform.first) & requiredPlatform) != 0)
+                            {
+                                filteredCoinList.push_back(index);
+                            }
+                        }
                     }
-                  }
-                  return false; // required platform not found
+                    filteredCoinList.push_back(index);
                 }
-                return true;
-              }
-              else 
-              { 
-                return false; 
-              }
-            });
+            }
+
             tableNeedsToBeRefiltered = false;
           }
           clipper.Begin(filteredCoinList.size());
@@ -594,7 +599,8 @@ void RenderImgui()
           {
             // Display a data item
             Coin* coin;
-            filter.IsActive() || bscChecked || ethChecked ? coin = &filteredCoinList[row_n] : coin = &coinList[row_n];
+
+            (filter.IsActive() || bscChecked || ethChecked) ? coin = &coinList[filteredCoinList[row_n]] : coin = &coinList[row_n];
     
             ImGui::PushID(coin->m_id.c_str());
             ImGui::TableNextRow();

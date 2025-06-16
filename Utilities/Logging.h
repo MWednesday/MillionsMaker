@@ -10,6 +10,7 @@ enum class MessageType
   Info,
   Warning,
   Error
+  // Assert TODO create
 };
 
 struct Message
