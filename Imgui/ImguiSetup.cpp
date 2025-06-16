@@ -5,6 +5,7 @@
 #include "imgui_internal.h"
 #include <algorithm>
 #include <set>
+#include <numeric>
 
 MessageLog g_log;
 
@@ -346,7 +347,7 @@ void SetupImguiWindow()
 
 static const ImGuiTableSortSpecs* s_current_sort_specs = NULL;
 
-static bool IMGUI_CDECL CompareWithSortSpecs(Coin& a, Coin& b)
+static bool IMGUI_CDECL CompareWithSortSpecs(const Coin& a, const Coin& b)
 {
   for (int n = 0; n < s_current_sort_specs->SpecsCount; n++)
   {
@@ -396,8 +397,8 @@ void PrintNumberInTableWithColor(float number)
 void RenderImgui()
 {
   CryptoConnection cryptoConnection;
-  std::vector<Coin> coinList;
 
+  std::vector<int> coinListIndexes; // indexes of coins in coinList. Helps with super fast sorting because we can sort indexes instead of Coins(strings) themselves.
   ImGuiTextFilter filter;
   std::vector<int> filteredCoinList; // contains indexes into coinList. Avoids making copies of coins!
   int oldNumOfFilterLetters = 0;
@@ -462,14 +463,15 @@ void RenderImgui()
       BufferingBar("##buffer_bar", ImVec2(viewport->WorkSize.x / cryptoConnection.GetCoinsToParse() * cryptoConnection.GetCoinList().GetCoinList().size(), viewport->WorkSize.y / 70), bg, col);
     }
     
-    if (cryptoConnection.IsSetupFinished() && coinList.empty())
-    {
-      coinList = cryptoConnection.GetCoinList().GetCoinList(); // This list should never change after this. Then we can use indexes of vector as free permanent IDs for coins which is great for optimizations.
-    }
-    
     if (cryptoConnection.IsSetupFinished())
     {
-        // TODO implement? const std::vector<Coin>& coinList = cryptoConnection.GetCoinList().GetCoinList(); // This list must never change after this. This way we can use indexes of vector as free permanent IDs for coins which is great for optimizations.
+      const std::vector<Coin>& coinList = cryptoConnection.GetCoinList().GetCoinList(); // coin list must never change after creation. This way we can use indexes of vector as free permanent IDs for coins which is great for optimizations.
+
+      if (coinListIndexes.empty() && !coinList.empty())
+      {
+          coinListIndexes.resize(coinList.size());
+          std::iota(coinListIndexes.begin(), coinListIndexes.end(), 0); // Fill with 0, 1, 2, ...
+      }
 
       filter.Draw("Filter", 200.0f);
       ImGui::SameLine();
@@ -515,14 +517,14 @@ void RenderImgui()
         if (ImGuiTableSortSpecs* sorts_specs = ImGui::TableGetSortSpecs())
           if (sorts_specs->SpecsDirty)
           {
-            // If the user presses on the same column and only the sorting direction changes, then we actually could get away
-            // with chaning the direction of drawing, instead of resorting again. But the code below sorts.
+            // Btw, if user presses on the same column and only the sorting direction changes, then we actually could get away
+            // with changing the direction of drawing, instead of resorting again. But it won't be needed in this application with this data because current implementation is super fast as is.
             tableNeedsToBeRefiltered = true;
             s_current_sort_specs = sorts_specs; // Store in variable accessible by the sort function.
             if (coinList.size() > 1)
             {
-              MeasureScopeTime(SortImguiTable);
-              std::sort(coinList.begin(), coinList.end(), CompareWithSortSpecs);
+              std::sort(coinListIndexes.begin(), coinListIndexes.end(),
+                  [&](int a, int b) { return CompareWithSortSpecs(coinList[a], coinList[b]); });
             }
             s_current_sort_specs = NULL;
             sorts_specs->SpecsDirty = false;
@@ -598,9 +600,9 @@ void RenderImgui()
           for (int row_n = clipper.DisplayStart; row_n < clipper.DisplayEnd; row_n++)
           {
             // Display a data item
-            Coin* coin;
+            const Coin* coin;
 
-            (filter.IsActive() || bscChecked || ethChecked) ? coin = &coinList[filteredCoinList[row_n]] : coin = &coinList[row_n];
+            (filter.IsActive() || bscChecked || ethChecked) ? coin = &coinList[filteredCoinList[row_n]] : coin = &coinList[coinListIndexes[row_n]];
     
             ImGui::PushID(coin->m_id.c_str());
             ImGui::TableNextRow();
