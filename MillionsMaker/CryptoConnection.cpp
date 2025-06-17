@@ -34,7 +34,9 @@ void CryptoConnection::GetCoinInfoAndDeserialize(std::vector<int> pageNumbers)
     {
       if (pageNumbers[i] != lastReportedPage)
       {
-        ReportError("Web request failed for page %u! Will retry soon. %s", pageNumbers[i], coinMarketDataResponse.text.c_str());
+        std::string& error = coinMarketDataResponse.text;
+        while (!error.empty() && (error.back() == '\n')) { error.pop_back(); } // trim new lines at the end
+        ReportError("Web request failed for page %u! Will retry soon. Reason: %s", pageNumbers[i], error.c_str());
         lastReportedPage = pageNumbers[i];
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(4000));

@@ -51,6 +51,7 @@ struct MessageLog
 
   void    Clear()
   {
+    std::lock_guard<std::mutex> guard(m_lock);
     Buf.clear();
     MessagesData.clear();
   }
@@ -69,21 +70,13 @@ struct MessageLog
     const int newSize = Buf.size();
 
     // looking for additional \n
-    int additionalNewLineCount = 0;
     for (int currentChar = oldSize; currentChar < newSize; currentChar++)
     {
-      if (Buf[currentChar] == '\n')
+      // Don't add a separate new line for last \n because we already do it for each new line at the start of the function
+      if (Buf[currentChar] == '\n' && currentChar != newSize - 1) 
       {
-        if (additionalNewLineCount == 0)
-        {
-          additionalNewLineCount++;
-        }
-        else // more than 0
-        {
           message.m_lineOffset = MessagesData.empty() ? 0 : currentChar + 1;
           MessagesData.push_back(message);
-          additionalNewLineCount++;
-        }
       }
     }
   }

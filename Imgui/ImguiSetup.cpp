@@ -158,7 +158,7 @@ void MessageLog::Draw()
       m_lock.lock();
       MessageData message = MessagesData[line_no];
       const char* line_start = Buf.begin() + message.m_lineOffset;
-      const char* line_end = (line_no + 1 < MessagesData.Size) ? (Buf.begin() + MessagesData[line_no + 1].m_lineOffset - 1) : Buf.end();
+      const char* line_end = (line_no + 1 < MessagesData.Size) ? (Buf.begin() + MessagesData[line_no + 1].m_lineOffset - 1) : Buf.end() - 1;
       const std::string line(line_start, line_end + 1);
       m_lock.unlock();
 
@@ -192,7 +192,7 @@ void MessageLog::Draw()
         m_lock.lock();
         MessageData message = MessagesData[line_no];
         const char* line_start = Buf.begin() + message.m_lineOffset;
-        const char* line_end = (line_no + 1 < MessagesData.Size) ? (Buf.begin() + MessagesData[line_no + 1].m_lineOffset - 1) : Buf.end();
+        const char* line_end = (line_no + 1 < MessagesData.Size) ? (Buf.begin() + MessagesData[line_no + 1].m_lineOffset - 1) : Buf.end() - 1;
         const std::string line(line_start, line_end + 1); // Saving value to free the lock
         m_lock.unlock();
 
