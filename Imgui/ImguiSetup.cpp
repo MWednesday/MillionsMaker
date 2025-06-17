@@ -4,7 +4,7 @@
 #include "ThreadName.h"
 #include "imgui_internal.h"
 #include <algorithm>
-#include <set>
+#include <unordered_set>
 #include <numeric>
 
 MessageLog g_log;
@@ -116,7 +116,7 @@ void PrintMessageWithCorrectColor(MessageType type, const char* line_start, cons
   }
 }
 
-void MessageLog::Draw(bool* p_open)
+void MessageLog::Draw()
 {
   // Options menu
   if (ImGui::BeginPopup("Options"))
@@ -220,9 +220,9 @@ void DrawLogWindow()
 
   ImGui::SetNextWindowPos(LogWindowPos);
   ImGui::SetNextWindowSize(LogWindowSize);
-  ImGui::Begin("Log", &g_log_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+  ImGui::Begin("Log", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
-  g_log.Draw(&g_log_window);
+  g_log.Draw();
 
   ImGui::End();
 }
@@ -398,7 +398,7 @@ void RenderImgui()
 {
   CryptoConnection cryptoConnection;
 
-  std::vector<int> coinListIndexes; // indexes of coins in coinList. Helps with super fast sorting because we can sort indexes instead of Coins(strings) themselves.
+  std::vector<int> coinListIndexes; // indexes of coins in coinList. Helps with super fast sorting because we can sort ints instead of Coins(strings) themselves.
   ImGuiTextFilter filter;
   std::vector<int> filteredCoinList; // contains indexes into coinList. Avoids making copies of coins!
   int oldNumOfFilterLetters = 0;
@@ -407,9 +407,9 @@ void RenderImgui()
   bool startedCryptoSetUp = false;
   bool tableNeedsToBeRefiltered = false;
 
-  std::set<std::string> coinsAlreadyCheckedOnCoingecko; // search is faster in set than in vector. TODO: consider using unordered_set. Btw check if we can use some int instead of string. Maybe we can add a unique int ID to each Coin
-  std::set<std::string> coinsAlreadyCheckedOnCMC;
-  std::set<std::string> coinsWithBuyLinkVisited;
+  std::unordered_set<int> coinsAlreadyCheckedOnCoingecko; // frequent lookup, so unordered_set and ints are perfect
+  std::unordered_set<int> coinsAlreadyCheckedOnCMC;
+  std::unordered_set<int> coinsWithBuyLinkVisited;
 
   while (g_main_window)
   {
@@ -637,7 +637,7 @@ void RenderImgui()
               // CoinGecko button
               // Potentially slow. We are checking every frame whether all buttons were already visited and searching a coin id in a set. The more buttons visited the slower.
               // Every coin could have additional flags... More RAM but saving on performance...
-              bool alreadyVisitedOnCoingecko = coinsAlreadyCheckedOnCoingecko.find(coin->m_id) != coinsAlreadyCheckedOnCoingecko.end(); 
+              bool alreadyVisitedOnCoingecko = coinsAlreadyCheckedOnCoingecko.find(coinListIndexes[row_n]) != coinsAlreadyCheckedOnCoingecko.end();
               if (alreadyVisitedOnCoingecko)
               {
                 ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
@@ -646,7 +646,7 @@ void RenderImgui()
               {
                 std::wstring webPage = L"https://www.coingecko.com/en/coins/" + std::wstring(coin->m_id.begin(), coin->m_id.end());
                 ShellExecute(0, 0, webPage.c_str(), 0, 0, SW_SHOW);
-                coinsAlreadyCheckedOnCoingecko.insert(coin->m_id);
+                coinsAlreadyCheckedOnCoingecko.insert(coinListIndexes[row_n]);
               }
               if (alreadyVisitedOnCoingecko)
               {
@@ -661,7 +661,7 @@ void RenderImgui()
     
               // CoinMarketCap button
               ImGui::SameLine();
-              bool alreadyVisitedOnCMC = coinsAlreadyCheckedOnCMC.find(coin->m_id) != coinsAlreadyCheckedOnCMC.end();
+              bool alreadyVisitedOnCMC = coinsAlreadyCheckedOnCMC.find(coinListIndexes[row_n]) != coinsAlreadyCheckedOnCMC.end();
               if (alreadyVisitedOnCMC)
               {
                 ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
@@ -670,7 +670,7 @@ void RenderImgui()
               {
                 std::wstring webPage = L"https://coinmarketcap.com/currencies/" + std::wstring(coin->m_id.begin(), coin->m_id.end());
                 ShellExecute(0, 0, webPage.c_str(), 0, 0, SW_SHOW);
-                coinsAlreadyCheckedOnCMC.insert(coin->m_id);
+                coinsAlreadyCheckedOnCMC.insert(coinListIndexes[row_n]);
               }
               if (alreadyVisitedOnCMC)
               {
@@ -687,7 +687,7 @@ void RenderImgui()
     
             // Buy Link button
             ImGui::TableNextColumn();
-            bool alreadyVisitedBuyLink = coinsWithBuyLinkVisited.find(coin->m_id) != coinsWithBuyLinkVisited.end();
+            bool alreadyVisitedBuyLink = coinsWithBuyLinkVisited.find(coinListIndexes[row_n]) != coinsWithBuyLinkVisited.end();
             if (alreadyVisitedBuyLink)
             {
               ImGui::PushStyleColor(ImGuiCol_Button, buttonColor); //RGBA
@@ -699,7 +699,7 @@ void RenderImgui()
               {
                 ShellExecute(0, 0, buyLink.c_str(), 0, 0, SW_SHOW);
               }
-              coinsWithBuyLinkVisited.insert(coin->m_id);
+              coinsWithBuyLinkVisited.insert(coinListIndexes[row_n]);
             }
             if (alreadyVisitedBuyLink)
             {

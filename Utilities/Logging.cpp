@@ -16,6 +16,10 @@ void FormatAndPrintMessage(MessageType type, std::string message, ...)
     {
       newLines = newLines + '\n';
     }
+    else
+    {
+        break;
+    }
   }
   message.erase(message.begin(), message.begin() + newLines.size());
 

@@ -31,105 +31,46 @@ bool CoinList::Deserialize(const rapidjson::Value & arrayFile)
 
 Coin::Platform CoinList::DeterminePlatform(const std::string& platformString)
 {
-  if (platformString == "ethereum") // TODO: could check performance of if-else vs switch statement
+  // Using swtich statement is not possible for strings (unless you hash the string).
+  // While a lot of if-else statements with string comparisons is also not great since they are usually every time O(n).
+  // But the compiler can optimize the if-else heavily and use branch prediction.
+  // Using a cached unordered_map could be perfect here since it allows O(1) average time complexity for lookups.
+  // However, before that it spends time hashing the string and perhaps also the compiler has less of a room to optimize things.
+  // Testing shows that using unordered_map in this case has no big speed up. Perhaps it would shine if we had even more pairs.
+  // Keep in mind that unordered_map also stays in the RAM memory. But for the sake of the example, using unordered_map here.
+
+  static const std::unordered_map<std::string, Coin::Platform> platformMap = {
+    {"ethereum", Coin::Platform::ETHEREUM},
+    {"binance-smart-chain", Coin::Platform::BINANCE_SMART_CHAIN},
+    {"polygon-pos", Coin::Platform::POLYGON_POS},
+    {"harmony-shard-0", Coin::Platform::HARMONY_SHARD_0},
+    {"solana", Coin::Platform::SOLANA},
+    {"chiliz", Coin::Platform::CHILIZ},
+    {"stellar", Coin::Platform::STELLAR},
+    {"avalanche", Coin::Platform::AVALANCHE},
+    {"arbitrum-one", Coin::Platform::ARBITRUM_ONE},
+    {"fantom", Coin::Platform::FANTOM},
+    {"xdai", Coin::Platform::XDAI},
+    {"tomochain", Coin::Platform::TOMOCHAIN},
+    {"huobi-token", Coin::Platform::HUOBI_TOKEN},
+    {"iotex", Coin::Platform::IOTEX},
+    {"okex-chain", Coin::Platform::OKEX_CHAIN},
+    {"celo", Coin::Platform::CELO},
+    {"tron", Coin::Platform::TRON},
+    {"zilliqa", Coin::Platform::ZILLIQA},
+    {"waves", Coin::Platform::WAVES},
+    {"binancecoin", Coin::Platform::BINANCECOIN},
+    {"eos", Coin::Platform::EOS},
+    {"neo", Coin::Platform::NEO},
+    {"klay-token", Coin::Platform::KLAY_TOKEN},
+    {"base", Coin::Platform::BASE},
+    {"cronos", Coin::Platform::CRONOS}
+  };
+
+  auto it = platformMap.find(platformString);
+  if(it != platformMap.end())
   {
-    return Coin::Platform::ETHEREUM;
-  }
-  else if (platformString == "binance-smart-chain")
-  {
-    return Coin::Platform::BINANCE_SMART_CHAIN;
-  }
-  else if (platformString == "polygon-pos")
-  {
-    return Coin::Platform::POLYGON_POS;
-  }
-  else if (platformString == "harmony-shard-0")
-  {
-    return Coin::Platform::HARMONY_SHARD_0;
-  }
-  else if (platformString == "solana")
-  {
-    return Coin::Platform::SOLANA;
-  }
-  else if (platformString == "chiliz")
-  {
-    return Coin::Platform::CHILIZ;
-  }
-  else if (platformString == "stellar")
-  {
-    return Coin::Platform::STELLAR;
-  }
-  else if (platformString == "avalanche")
-  {
-    return Coin::Platform::AVALANCHE;
-  }
-  else if (platformString == "arbitrum-one")
-  {
-    return Coin::Platform::ARBITRUM_ONE;
-  }
-  else if (platformString == "fantom")
-  {
-    return Coin::Platform::FANTOM;
-  }
-  else if (platformString == "xdai")
-  {
-    return Coin::Platform::XDAI;
-  }
-  else if (platformString == "tomochain")
-  {
-    return Coin::Platform::TOMOCHAIN;
-  }
-  else if (platformString == "huobi-token")
-  {
-    return Coin::Platform::HUOBI_TOKEN;
-  }
-  else if (platformString == "iotex")
-  {
-    return Coin::Platform::IOTEX;
-  }
-  else if (platformString == "okex-chain")
-  {
-    return Coin::Platform::OKEX_CHAIN;
-  }
-  else if (platformString == "celo")
-  {
-    return Coin::Platform::CELO;
-  }
-  else if (platformString == "tron")
-  {
-    return Coin::Platform::TRON;
-  }
-  else if (platformString == "zilliqa")
-  {
-    return Coin::Platform::ZILLIQA;
-  }
-  else if (platformString == "waves")
-  {
-    return Coin::Platform::WAVES;
-  }
-  else if (platformString == "binancecoin")
-  {
-    return Coin::Platform::BINANCECOIN;
-  }
-  else if (platformString == "eos")
-  {
-    return Coin::Platform::EOS;
-  }
-  else if (platformString == "neo")
-  {
-    return Coin::Platform::NEO;
-  }
-  else if (platformString == "klay-token")
-  {
-    return Coin::Platform::KLAY_TOKEN;
-  }
-  else if (platformString == "base")
-  {
-    return Coin::Platform::BASE;
-  }
-  else if (platformString == "cronos")
-  {
-    return Coin::Platform::CRONOS;
+    return it->second;
   }
   else
   {

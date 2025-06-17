@@ -12,7 +12,6 @@ static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
 static IDXGISwapChain*          g_pSwapChain = NULL;
 static ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
 static bool g_main_window = true;
-static bool g_log_window = true;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -56,25 +55,24 @@ struct MessageLog
     MessagesData.clear();
   }
 
-  // Does this func support multithreading?
   void    AddLog(const Message& msg)
   {
     MessageData message;
     message.m_type = msg.m_Type;
-    m_lock.lock();
+
+    std::lock_guard<std::mutex> guard(m_lock);
     message.m_lineOffset = Buf.size();
     MessagesData.push_back(message);
     
-    int newLinePos = Buf.size(); // old size
+    int oldSize = Buf.size(); // new line's position
     Buf.appendf(msg.m_Text);
-    const int bufSize = Buf.size();
-    m_lock.unlock();
+    const int newSize = Buf.size();
 
     // looking for additional \n
     int additionalNewLineCount = 0;
-    for (int new_size = bufSize; newLinePos < new_size; newLinePos++)
+    for (int currentChar = oldSize; currentChar < newSize; currentChar++)
     {
-      if (Buf[newLinePos] == '\n') // unsafe outside of mutex? Buffer might relocate
+      if (Buf[currentChar] == '\n')
       {
         if (additionalNewLineCount == 0)
         {
@@ -82,17 +80,15 @@ struct MessageLog
         }
         else // more than 0
         {
-          m_lock.lock();
-          message.m_lineOffset = MessagesData.empty() ? 0 : newLinePos + 1;
+          message.m_lineOffset = MessagesData.empty() ? 0 : currentChar + 1;
           MessagesData.push_back(message);
-          m_lock.unlock();
           additionalNewLineCount++;
         }
       }
     }
   }
 
-  void Draw(bool* p_open = NULL);
+  void Draw();
 };
 
 extern MessageLog g_log;
