@@ -1,16 +1,6 @@
 #include "Coin.h"
 #include <algorithm>
 
-bool Coin::Serialize(rapidjson::Writer<rapidjson::StringBuffer> * writer) const
-{
-  return false;
-}
-
-const char* ValueOrEmpty(const char* s)
-{
-  return s == nullptr ? "" : s;
-}
-
 bool Coin::Deserialize(const rapidjson::Value & obj)
 {
   // In some cases the values can be null. Double seems to work for any number

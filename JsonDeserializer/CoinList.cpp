@@ -79,34 +79,17 @@ Coin::Platform CoinList::DeterminePlatform(const std::string& platformString)
   }
 }
 
-//Coin* find(std::string valueToFind, std::vector<Coin>& array)
-//{
-//  int pos = 0;
-//  int length = array.size();
-//  int limit = std::min(length, 1);
-//  while (limit < length && array[limit] < valueToFind)
-//  {
-//    pos = limit + 1;
-//    limit = std::min(length, limit * 2 + 1);
-//  }
-//  while (pos < limit)
-//  {
-//    int testpos = pos + ((limit - pos) >> 1);
-//
-//    if (array[testpos] < valueToFind)
-//      pos = testpos + 1;
-//    else
-//      limit = testpos;
-//  }
-//  return (pos < length&& array[pos] == valueToFind ? pos : -1);
-//}
+constexpr const char* ValueOrEmpty(const char* s)
+{
+    return s == nullptr ? "" : s;
+}
 
 bool CoinList::DeserializePlatform(const rapidjson::Value& arrayFile)
 {
   if (arrayFile.IsArray())
   {
-    std::string platformName;
-    std::string platformAddress;
+    std::string    platformName;
+    std::string    platformAddress;
     Coin::Platform platformToInsert = Coin::Platform::UNSET;
     std::string coinID;
 

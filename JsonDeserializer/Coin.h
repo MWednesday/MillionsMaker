@@ -7,7 +7,6 @@ struct Coin : public JSONBase
 {
 public:
   virtual bool Deserialize(const rapidjson::Value& obj);
-  virtual bool Serialize(rapidjson::Writer<rapidjson::StringBuffer>* writer) const;
 
   inline bool operator< (const Coin& rhs) const { return m_id.compare(rhs.m_id) < 0; }
   inline bool operator< (const std::string& rhs) const { return m_id.compare(rhs) < 0; }
@@ -63,5 +62,3 @@ public:
   std::map<Platform, std::string>    m_platforms;
 
 };
-
-const char* ValueOrEmpty(const char* s);

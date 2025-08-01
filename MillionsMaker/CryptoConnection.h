@@ -12,8 +12,7 @@ private:
 
   bool m_SetupFinished = false;
 
-  // ugly data needed for ImGui...:
-  size_t m_CoinsToParse = 0;
+  size_t m_CoinsToParse = 0; // data needed for ImGui
 public:
   void SyncCryptoDataFromCoinGecko();
   void ScanAndReportSuccessfulCoins();

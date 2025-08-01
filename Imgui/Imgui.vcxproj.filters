@@ -9,32 +9,31 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Imgui sources">
+      <UniqueIdentifier>{1dd69b43-8ac4-4f68-b0fd-3bb540ec6c0d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\extern\imgui-1.84.2\imgui.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\imgui-1.84.2\imgui_draw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\imgui-1.84.2\imgui_tables.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\imgui-1.84.2\imgui_widgets.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\imgui-1.84.2\backends\imgui_impl_dx11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\imgui-1.84.2\backends\imgui_impl_win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ImguiSetup.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui-1.84.2\imgui.cpp">
+      <Filter>Imgui sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui-1.84.2\imgui_widgets.cpp">
+      <Filter>Imgui sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui-1.84.2\imgui_draw.cpp">
+      <Filter>Imgui sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui-1.84.2\imgui_tables.cpp">
+      <Filter>Imgui sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui-1.84.2\backends\imgui_impl_dx11.cpp">
+      <Filter>Imgui sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui-1.84.2\backends\imgui_impl_win32.cpp">
+      <Filter>Imgui sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

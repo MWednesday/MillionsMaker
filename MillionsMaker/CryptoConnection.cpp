@@ -10,7 +10,8 @@ bool IsError(const gecko::web::response& response)
 {
   // https://support.coingecko.com/hc/en-us/articles/6472757474457-How-can-I-differentiate-between-the-status-codes-I-am-receiving-and-what-do-they-mean
 
-  if (response.response_code == "200") // OK
+  const char* OK_code = "200";
+  if (response.response_code == OK_code)
   {
     return false;
   }
@@ -20,7 +21,7 @@ bool IsError(const gecko::web::response& response)
 
 void CryptoConnection::GetCoinInfoAndDeserialize(std::vector<int> pageNumbers)
 {
-  //ReportAssert(pageNumbers.size() > 0, "Ran function with 0 pages to process");
+  ReportAssert(pageNumbers.size() > 0, "Ran function with 0 pages to process");
 
   gecko::coinsFunctions coins;
   gecko::web::response coinMarketDataResponse;
@@ -52,8 +53,8 @@ void CryptoConnection::GetCoinInfoAndDeserialize(std::vector<int> pageNumbers)
 bool CryptoConnection::FillCoinList()
 {
   MeasureScopeTime(ProcessingAllCoinsFromCoinGecko);
-  gecko::api coinGecko;
 
+  gecko::api coinGecko;
   while (!coinGecko.ping())
   {
     ReportError("CoinGecko is offline! Waiting...");
@@ -125,8 +126,6 @@ bool CryptoConnection::FillCoinList()
 
 void CryptoConnection::SyncCryptoDataFromCoinGecko()
 {
-  std::string allCoins;
-  m_CoinList.Deserialize(allCoins);
   FillCoinList();
   ReportInfo("\nCoin list size = %d\n\n", m_CoinList.GetCoinList().size());
 }
@@ -184,24 +183,27 @@ std::wstring CryptoConnection::GetBuyLink(const std::string& coinID)
 
   const rapidjson::Value& platforms = doc["platforms"];
   std::string platform;
-  std::string address;
+  std::string currencyID;
   if (platforms.MemberCount() > 0)
   {
     // the first element should be the main platform
     platform = platforms.MemberBegin()->name.GetString();
-    address = platforms.MemberBegin()->value.GetString();
+    currencyID = platforms.MemberBegin()->value.GetString();
   }
 
   std::string buy_link;
-  if (platform == "ethereum" && address != "")
+  if (platform == "ethereum" && currencyID != "")
   {
-    buy_link = "https://app.uniswap.org/#/swap?outputCurrency=" + address;
+    const char* uniswapLink = "https://app.uniswap.org/#/swap?outputCurrency=";
+    buy_link = uniswapLink + currencyID;
   }
-  else if (platform == "binance-smart-chain" && address != "")
+  else if (platform == "binance-smart-chain" && currencyID != "")
   {
-    buy_link = "https://pancakeswap.finance/swap?outputCurrency=" + address + "&inputCurrency=0x55d398326f99059ff775485246999027b3197955";
+    const char* pancakeswapLink = "https://pancakeswap.finance/swap?outputCurrency=";
+    const char* USDTLink = "&inputCurrency=0x55d398326f99059ff775485246999027b3197955";
+    buy_link = pancakeswapLink + currencyID + USDTLink;
   }
-  else if (platform == "" || address == "") // coin probably has a custom platform
+  else if (platform == "" || currencyID == "") // coin probably has a custom platform
   {
     ReportError("No info on which platforms %s can be found. Will open its homepage instead.", coinID.c_str());
     const rapidjson::Value& links = doc["links"];
