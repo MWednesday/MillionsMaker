@@ -401,8 +401,7 @@ void RenderImgui()
   std::vector<int> coinListIndexes; // indexes of coins in coinList. Helps with super fast sorting because we can sort ints instead of Coins(strings) themselves.
   ImGuiTextFilter filter;
   std::vector<int> filteredCoinList; // contains indexes into coinList. Avoids making copies of coins!
-  int oldNumOfFilterLetters = 0;
-  int numOfFilterLetters = 0;
+  std::string savedTextFilter;
 
   bool startedCryptoSetUp = false;
   bool tableNeedsToBeRefiltered = false;
@@ -538,12 +537,11 @@ void RenderImgui()
         // Filtering
         if (someFilterIsOn)
         {
-          numOfFilterLetters = strlen(filter.InputBuf);
-          if (oldNumOfFilterLetters != numOfFilterLetters || tableNeedsToBeRefiltered) // don't use filter.IsActive() here or it will sort every frame
+          if (savedTextFilter != filter.InputBuf || tableNeedsToBeRefiltered) // don't use filter.IsActive() here or it will sort every frame
           {
             filteredCoinList.clear();
-            oldNumOfFilterLetters = numOfFilterLetters;
-    
+            savedTextFilter = filter.InputBuf;
+
             int requiredPlatform = 0;
             if (bscChecked)
             {
@@ -553,8 +551,6 @@ void RenderImgui()
             {
               requiredPlatform |= static_cast<int>(Coin::Platform::ETHEREUM);
             }
-            
-            std::string filterText = filter.InputBuf;
 
             for (size_t index = 0; index < coinList.size(); index++)
             {
@@ -565,23 +561,27 @@ void RenderImgui()
 
                 bool foundNameMatch = std::search(
                     coinList[index].m_name.begin(), coinList[index].m_name.end(),
-                    filterText.begin(), filterText.end(),
+                    savedTextFilter.begin(), savedTextFilter.end(),
                     compareLowercaseChars)   != coinList[index].m_name.end();
 
                 if (foundNameMatch)
                 {
                     // Letter pattern was found. Now let's filter by required platforms
-                    if (requiredPlatform != 0)
+                    if (requiredPlatform == 0)
+                    {
+                        filteredCoinList.push_back(index);
+                    }
+                    else
                     {
                         for (auto coinPlatform : coinList[index].m_platforms)
                         {
                             if ((static_cast<int>(coinPlatform.first) & requiredPlatform) != 0)
                             {
                                 filteredCoinList.push_back(index);
+                                break; // One platform is enough. Though we could make it so that all selected platforms are required
                             }
                         }
                     }
-                    filteredCoinList.push_back(index);
                 }
             }
 
