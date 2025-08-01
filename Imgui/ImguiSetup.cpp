@@ -102,15 +102,15 @@ void PrintMessageWithCorrectColor(MessageType type, const char* line_start, cons
 
     if (type == MessageType::Info)
     {
-      ImGui::TextColored(ImVec4(0.3f, 0.7f, 1.0f, 1.0f), text_line);
+      ImGui::TextColored(ImVec4(0.3f, 0.7f, 1.0f, 1.0f), "%s", text_line);
     }
     if (type == MessageType::Warning)
     {
-      ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), text_line);
+      ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", text_line);
     }
     else if (type == MessageType::Error)
     {
-      ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), text_line);
+      ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", text_line);
     }
     delete[] text_line;
   }

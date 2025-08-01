@@ -66,7 +66,7 @@ struct MessageLog
     MessagesData.push_back(message);
     
     int oldSize = Buf.size(); // new line's position
-    Buf.appendf(msg.m_Text);
+    Buf.append(msg.m_Text);
     const int newSize = Buf.size();
 
     // looking for additional \n

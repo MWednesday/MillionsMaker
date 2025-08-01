@@ -6,20 +6,14 @@ bool CoinList::Deserialize(const rapidjson::Value & arrayFile)
 {
   if (arrayFile.IsArray())
   {
-#ifdef _DEBUG
-    std::string info;
-#endif
     for (const rapidjson::Value & coinData : arrayFile.GetArray())
     {
       Coin coin;
       coin.Deserialize(coinData);
+      ReportDebug("Added %s to the coin list.", coin.m_name.c_str());
       m_lock.lock();
-      m_CoinList.push_back(coin);
+      m_CoinList.push_back(std::move(coin));
       m_lock.unlock();
-#ifdef _DEBUG
-      info = "Added " + coin.m_name + " to the coin list.";
-      ReportDebug(info.c_str()); // Passing preformatted string to avoid ??? in some coin names. TODO: Check the reasons
-#endif
     }
   }
   else

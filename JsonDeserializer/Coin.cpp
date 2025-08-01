@@ -21,7 +21,6 @@ bool Coin::Deserialize(const rapidjson::Value & obj)
   m_price_change_percentage_30d_in_currency = obj["price_change_percentage_30d_in_currency"].IsNumber() ? obj["price_change_percentage_30d_in_currency"].GetFloat() : m_price_change_percentage_30d_in_currency;
   m_price_change_percentage_7d_in_currency =  obj["price_change_percentage_7d_in_currency"].IsNumber()  ? obj["price_change_percentage_7d_in_currency"].GetFloat() : m_price_change_percentage_7d_in_currency;
 
-  std::replace(m_name.begin(), m_name.end(), '%', '\%'); // replacing to avoid issues during formatting
   // TODO investigate if it would be possible or worth it to print emoticons as well instead of "?" It is possible that additional settings would need to be enabled in Imgui. Maybe at least monochrome versions
 
   return true;
