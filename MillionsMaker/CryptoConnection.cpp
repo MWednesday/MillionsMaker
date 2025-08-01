@@ -87,7 +87,7 @@ bool CryptoConnection::FillCoinList()
   int pageNum = 1;
   std::vector<int> pageNumbers;
   char threadName[22] = "Crypto Downloader ";
-  for (int threadNum = 0; threadNum < numOfThreads - 1; threadNum++)
+  for (int threadNum = 0; threadNum < numOfThreads; threadNum++)
   {
     for (int k = 0; k < pagesPerThread && pageNum <= numOfPages; k++, pageNum++)
     {
@@ -146,7 +146,7 @@ void CryptoConnection::ScanAndReportSuccessfulCoins()
 
 std::wstring CryptoConnection::GetBuyLink(const std::string& coinID)
 {
-  // Could also use the following method - instead of doing any CoinGecko calls, just find cached info in coin's platform. The issue is that we won't be able to open coin's official link
+// Could also use the following method - instead of doing any CoinGecko calls, just find cached info in coin's platform. The issue is that we won't be able to open coin's official link
 //auto const coin = std::find(GetCoinList().GetCoinList().begin(), GetCoinList().GetCoinList().end(), coinID);
 
 //if (coin == GetCoinList().GetCoinList().end())
